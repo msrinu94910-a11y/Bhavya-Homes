@@ -5,116 +5,125 @@ export default function Home() {
   return (
     <div className="space-y-16">
       
-      {/* Architectural Hero Section with Entrance Building Clearly Visible on Left */}
-      <section className="relative min-h-[85vh] flex items-center justify-end overflow-hidden bg-slate-950">
+      {/* 100% Crystal-Clear Architectural Hero Banner */}
+      <section className="relative w-full bg-slate-950">
         
-        {/* Unobscured Background Entrance Gate Image on Left */}
-        <div className="absolute inset-0 z-0">
+        {/* Main 100% Clear Image Container with NO Dark Gradients Masking Building */}
+        <div className="relative w-full h-[65vh] sm:h-[75vh] md:h-[80vh] overflow-hidden">
           <Image
             src="/hero-bg.jpg"
-            alt="Bhavya Homes Gated Community Entrance Arch"
+            alt="Bhavya Homes County Gated Community Entrance Arch"
             fill
             priority
-            className="object-cover object-left md:object-center"
+            className="object-cover object-center"
           />
-          {/* Right Gradient Overlay so entrance gate building stays 100% visible on left */}
-          <div className="absolute inset-0 bg-gradient-to-l from-slate-950 via-slate-950/80 to-transparent md:to-transparent" />
+
+          {/* Floating RERA & HMDA Badge Card on Bottom-Right */}
+          <div className="absolute bottom-6 right-6 z-10 bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-2xl border border-amber-400/50 flex flex-wrap items-center space-x-3 text-slate-900 text-xs font-bold">
+            <span className="text-slate-800">Rera No: P02400001406</span>
+            <span className="text-slate-300">|</span>
+            <span className="text-emerald-700 font-extrabold">TS RERA</span>
+            <span className="text-slate-300">|</span>
+            <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">
+              HMDA Approved
+            </span>
+          </div>
         </div>
 
-        {/* Right Side Text Container */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full flex justify-end">
-          <div className="max-w-lg space-y-4 text-left text-white">
+        {/* Horizontal Interactive Search Bar Below Hero Image */}
+        <div className="bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 border-t border-b border-slate-800/80 shadow-2xl">
+          <div className="max-w-7xl mx-auto space-y-6">
             
-            {/* Floating RERA & HMDA Approved Badge */}
-            <div className="inline-flex flex-wrap items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-500/40 text-[11px] font-bold text-amber-400 shadow-xl">
-              <span className="flex items-center space-x-1 text-emerald-400">
-                <span>✓ TS RERA APPROVED</span>
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="text-slate-300">RERA No: P02400001406</span>
-              <span className="text-slate-600">•</span>
-              <span className="text-emerald-400">HMDA Layout</span>
-            </div>
-
-            {/* Title & Tagline */}
-            <div className="space-y-1">
-              <h1 className="text-2xl sm:text-4xl font-black tracking-tight drop-shadow-2xl leading-tight">
-                BHAVYA <span className="bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent">HOMES COUNTY</span>
-              </h1>
-              <p className="text-[11px] sm:text-xs font-bold text-amber-400 uppercase tracking-widest drop-shadow-md">
-                BUILDING A NEW FUTURE
-              </p>
-              <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed pt-0.5 drop-shadow-md">
-                A Premium 50-Acre Mega Real Estate Venture & Gated Community Luxury Residences in Hyderabad.
-              </p>
-            </div>
-
-            {/* Compact Search Filter Box */}
-            <div className="bg-slate-900/90 backdrop-blur-md p-3.5 rounded-2xl border border-slate-800 space-y-2.5 shadow-2xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                <div>
-                  <label className="block font-bold text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
-                    Location Corridor
-                  </label>
-                  <select className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-2.5 py-2 outline-none focus:border-amber-500 font-medium text-xs">
-                    <option>Hyderabad (All Corridors)</option>
-                    <option>Gachibowli Growth Corridor</option>
-                    <option>Shadnagar / Pharma City</option>
-                    <option>Miyapur / Bachupally</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
-                    Property Category
-                  </label>
-                  <select className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-2.5 py-2 outline-none focus:border-amber-500 font-medium text-xs">
-                    <option>Open Plots (Gated Layout)</option>
-                    <option>Luxury Villa</option>
-                    <option>High-Rise Apartment</option>
-                  </select>
-                </div>
+            {/* Title & Tagline Bar */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                  BHAVYA <span className="bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent">HOMES COUNTY</span>
+                </h1>
+                <p className="text-xs text-amber-400 font-bold tracking-widest uppercase mt-0.5">
+                  BUILDING A NEW FUTURE — 50-Acre Mega Venture & Gated Community Luxury Residences
+                </p>
               </div>
 
-              <button className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-2.5 rounded-xl shadow-lg transition-all uppercase tracking-wider text-xs">
-                Search Venture & Availability
-              </button>
+              <div className="flex items-center space-x-3">
+                <Link
+                  href="/properties"
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-5 py-2.5 rounded-xl shadow-md transition-all uppercase tracking-wider"
+                >
+                  Browse All Properties
+                </Link>
+                <Link
+                  href="/contact"
+                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl border border-slate-700 transition-all uppercase tracking-wider"
+                >
+                  Book Site Visit
+                </Link>
+              </div>
             </div>
 
-            {/* Key Assurance Highlights */}
-            <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-[11px] font-bold text-slate-200 pt-0.5 drop-shadow-md">
-              <span className="flex items-center space-x-1">
-                <span className="text-emerald-400">✓</span>
-                <span>100% Clear Title</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <span className="text-emerald-400">✓</span>
-                <span>Spot Registration</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <span className="text-emerald-400">✓</span>
-                <span>Bank Loan Available</span>
-              </span>
+            {/* Interactive Search Box */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-bold text-white">
+              <div>
+                <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
+                  Location Corridor
+                </label>
+                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                  <option>Hyderabad (All Corridors)</option>
+                  <option>Gachibowli Growth Corridor</option>
+                  <option>Shadnagar / Pharma City</option>
+                  <option>Miyapur / Bachupally</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
+                  Property Category
+                </label>
+                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                  <option>Open Plots (Gated Layout)</option>
+                  <option>Luxury Villa</option>
+                  <option>High-Rise Apartment</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
+                  Price Budget
+                </label>
+                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                  <option>Any Budget</option>
+                  <option>₹25 Lakhs - ₹50 Lakhs</option>
+                  <option>₹50 Lakhs - ₹1 Crore</option>
+                  <option>₹1 Crore - ₹3 Crores</option>
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <button className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all uppercase tracking-wider text-xs">
+                  Search Venture & Availability
+                </button>
+              </div>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-2.5 pt-1">
-              <Link
-                href="/properties"
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider"
-              >
-                Browse All Properties
-              </Link>
-              <Link
-                href="/contact"
-                className="bg-slate-900/80 hover:bg-slate-900 text-white font-bold px-5 py-2.5 rounded-xl border border-slate-700 backdrop-blur-md transition-all text-xs uppercase tracking-wider"
-              >
-                Book Free Site Visit
-              </Link>
+            {/* Key Assurance Perks */}
+            <div className="flex flex-wrap items-center space-x-6 text-xs font-bold text-slate-300 pt-2">
+              <span className="flex items-center space-x-1.5">
+                <span className="text-emerald-400 font-bold">✓</span>
+                <span>100% Clear Title & Spot Registration</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
+                <span className="text-emerald-400 font-bold">✓</span>
+                <span>Bank Loan Facility Available</span>
+              </span>
+              <span className="flex items-center space-x-1.5">
+                <span className="text-emerald-400 font-bold">✓</span>
+                <span>24/7 Security & Gated Compound Wall</span>
+              </span>
             </div>
 
           </div>
         </div>
+
       </section>
 
       {/* Venture Highlights Grid */}
