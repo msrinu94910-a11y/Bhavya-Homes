@@ -5,24 +5,24 @@ export default function Home() {
   return (
     <div className="space-y-16">
       
-      {/* Architectural Hero Section with Entrance Building Clearly Visible on Right */}
-      <section className="relative min-h-[80vh] flex items-center justify-start overflow-hidden bg-slate-950">
+      {/* Architectural Hero Section with Entrance Building Clearly Visible on Left */}
+      <section className="relative min-h-[85vh] flex items-center justify-end overflow-hidden bg-slate-950">
         
-        {/* Unobscured Background Entrance Gate Image */}
+        {/* Unobscured Background Entrance Gate Image on Left */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/hero-bg.jpg"
             alt="Bhavya Homes Gated Community Entrance Arch"
             fill
             priority
-            className="object-cover object-center"
+            className="object-cover object-left md:object-center"
           />
-          {/* Side Gradient Overlay so text is readable while Entrance Gate stays 100% visible on right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent md:to-transparent" />
+          {/* Right Gradient Overlay so entrance gate building stays 100% visible on left */}
+          <div className="absolute inset-0 bg-gradient-to-l from-slate-950 via-slate-950/80 to-transparent md:to-transparent" />
         </div>
 
-        {/* Left Side Compact Text Container */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full">
+        {/* Right Side Text Container */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full flex justify-end">
           <div className="max-w-lg space-y-4 text-left text-white">
             
             {/* Floating RERA & HMDA Approved Badge */}
