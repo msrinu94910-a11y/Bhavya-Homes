@@ -8,18 +8,18 @@ export default function Home() {
       {/* 100% Uncropped Architectural Hero Banner */}
       <section className="relative w-full bg-slate-950">
         
-        {/* Aspect Ratio Container for 100% Full Uncropped Entrance Gate View */}
-        <div className="relative w-full aspect-[16/9] max-h-[80vh] min-h-[420px] bg-slate-950 overflow-hidden flex items-center justify-center">
+        {/* Perfectly Proportioned Entrance Gate Image Container */}
+        <div className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[65vh] bg-slate-950 overflow-hidden">
           <Image
             src="/hero-bg.jpg"
             alt="Bhavya Homes County Gated Community Entrance Arch"
             fill
             priority
-            className="object-contain md:object-cover object-center"
+            className="object-cover object-center"
           />
 
           {/* Floating RERA & HMDA Badge Card on Bottom-Right */}
-          <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-10 bg-white/95 backdrop-blur-md px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl shadow-2xl border border-amber-400/50 flex flex-wrap items-center space-x-2 sm:space-x-3 text-slate-900 text-[11px] sm:text-xs font-bold">
+          <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-6 z-10 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-2xl border border-amber-400/50 flex flex-wrap items-center space-x-2 sm:space-x-3 text-slate-900 text-[11px] sm:text-xs font-bold">
             <span className="text-slate-800">Rera No: P02400001406</span>
             <span className="text-slate-300">|</span>
             <span className="text-emerald-700 font-extrabold">TS RERA</span>
@@ -31,13 +31,13 @@ export default function Home() {
         </div>
 
         {/* Horizontal Interactive Search Bar Below Hero Image */}
-        <div className="bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 border-t border-b border-slate-800/80 shadow-2xl">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <div className="bg-slate-950 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 border-t border-b border-slate-800/80 shadow-2xl">
+          <div className="max-w-7xl mx-auto space-y-5">
             
             {/* Title & Tagline Bar */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
               <div>
-                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   BHAVYA <span className="bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent">HOMES COUNTY</span>
                 </h1>
                 <p className="text-xs text-amber-400 font-bold tracking-widest uppercase mt-0.5">
@@ -67,7 +67,7 @@ export default function Home() {
                 <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
                   Location Corridor
                 </label>
-                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2.5 outline-none focus:border-amber-500 font-medium text-xs">
                   <option>Hyderabad (All Corridors)</option>
                   <option>Gachibowli Growth Corridor</option>
                   <option>Shadnagar / Pharma City</option>
@@ -79,7 +79,7 @@ export default function Home() {
                 <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
                   Property Category
                 </label>
-                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2.5 outline-none focus:border-amber-500 font-medium text-xs">
                   <option>Open Plots (Gated Layout)</option>
                   <option>Luxury Villa</option>
                   <option>High-Rise Apartment</option>
@@ -90,7 +90,7 @@ export default function Home() {
                 <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
                   Price Budget
                 </label>
-                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-2.5 outline-none focus:border-amber-500 font-medium text-xs">
                   <option>Any Budget</option>
                   <option>₹25 Lakhs - ₹50 Lakhs</option>
                   <option>₹50 Lakhs - ₹1 Crore</option>
@@ -99,14 +99,14 @@ export default function Home() {
               </div>
 
               <div className="flex items-end">
-                <button className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all uppercase tracking-wider text-xs">
+                <button className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-2.5 rounded-xl shadow-lg transition-all uppercase tracking-wider text-xs">
                   Search Venture & Availability
                 </button>
               </div>
             </div>
 
             {/* Key Assurance Perks */}
-            <div className="flex flex-wrap items-center space-x-6 text-xs font-bold text-slate-300 pt-2">
+            <div className="flex flex-wrap items-center space-x-6 text-[11px] font-bold text-slate-300 pt-1">
               <span className="flex items-center space-x-1.5">
                 <span className="text-emerald-400 font-bold">✓</span>
                 <span>100% Clear Title & Spot Registration</span>
@@ -144,7 +144,7 @@ export default function Home() {
 
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 text-center hover:shadow-md transition-all">
             <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl">
-              🛣️
+              integral
             </div>
             <h3 className="text-lg font-bold text-slate-900">60' & 40' Blacktop Roads</h3>
             <p className="text-slate-600 text-xs mt-1">Wide avenue plantation with underground cabling & drainage.</p>
