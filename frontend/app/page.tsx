@@ -17,16 +17,16 @@ export default function Home() {
             priority
             className="object-cover object-center"
           />
-          {/* Side Gradient Overlay so the Entrance Gate & Building stay 100% visible on right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/75 to-transparent md:to-transparent" />
+          {/* Side Gradient Overlay so text is readable while Entrance Gate stays 100% visible on right */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent md:to-transparent" />
         </div>
 
-        {/* Left Side Content Container */}
+        {/* Left Side Clean Text Container (No Background Card) */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-          <div className="max-w-xl space-y-6 text-left text-white bg-slate-950/85 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-slate-800/90 shadow-2xl">
+          <div className="max-w-xl space-y-6 text-left text-white">
             
             {/* Floating RERA & HMDA Approved Badge */}
-            <div className="inline-flex flex-wrap items-center gap-2 bg-slate-900/90 px-4 py-2 rounded-full border border-amber-500/40 text-xs font-bold text-amber-400">
+            <div className="inline-flex flex-wrap items-center gap-2 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-full border border-amber-500/40 text-xs font-bold text-amber-400 shadow-xl">
               <span className="flex items-center space-x-1 text-emerald-400">
                 <span>✓ TS RERA APPROVED</span>
               </span>
@@ -38,19 +38,19 @@ export default function Home() {
 
             {/* Title & Tagline */}
             <div className="space-y-2">
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight drop-shadow-md leading-tight">
+              <h1 className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-2xl leading-tight">
                 BHAVYA <span className="bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent">HOMES COUNTY</span>
               </h1>
-              <p className="text-xs sm:text-sm font-semibold text-amber-400 uppercase tracking-widest">
+              <p className="text-xs sm:text-sm font-semibold text-amber-400 uppercase tracking-widest drop-shadow-md">
                 BUILDING A NEW FUTURE
               </p>
-              <p className="text-sm sm:text-base font-medium text-slate-300 leading-relaxed pt-1">
+              <p className="text-sm sm:text-base font-medium text-slate-200 leading-relaxed pt-1 drop-shadow-md">
                 A Premium 50-Acre Mega Real Estate Venture & Gated Community Luxury Residences in Hyderabad.
               </p>
             </div>
 
             {/* Search Filter Box */}
-            <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-3">
+            <div className="bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-800 space-y-3 shadow-2xl">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
                   <label className="block font-bold text-amber-400 uppercase tracking-wider mb-1">
@@ -82,7 +82,7 @@ export default function Home() {
             </div>
 
             {/* Key Assurance Highlights */}
-            <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold text-slate-300 pt-1 border-t border-slate-800/80">
+            <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold text-slate-200 pt-1 drop-shadow-md">
               <span className="flex items-center space-x-1">
                 <span className="text-emerald-400">✓</span>
                 <span>100% Clear Title</span>
@@ -107,7 +107,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/contact"
-                className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-xl border border-slate-700 transition-all text-xs uppercase tracking-wider"
+                className="bg-slate-900/80 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl border border-slate-700 backdrop-blur-md transition-all text-xs uppercase tracking-wider"
               >
                 Book Free Site Visit
               </Link>
