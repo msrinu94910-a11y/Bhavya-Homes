@@ -6,7 +6,7 @@ export default function Home() {
     <div className="space-y-16">
       
       {/* Architectural Hero Section with Entrance Building Clearly Visible on Right */}
-      <section className="relative min-h-[90vh] flex items-center justify-start overflow-hidden bg-slate-950">
+      <section className="relative min-h-[80vh] flex items-center justify-start overflow-hidden bg-slate-950">
         
         {/* Unobscured Background Entrance Gate Image */}
         <div className="absolute inset-0 z-0">
@@ -18,15 +18,15 @@ export default function Home() {
             className="object-cover object-center"
           />
           {/* Side Gradient Overlay so text is readable while Entrance Gate stays 100% visible on right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent md:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent md:to-transparent" />
         </div>
 
-        {/* Left Side Clean Text Container (No Background Card) */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-          <div className="max-w-xl space-y-6 text-left text-white">
+        {/* Left Side Compact Text Container */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full">
+          <div className="max-w-lg space-y-4 text-left text-white">
             
             {/* Floating RERA & HMDA Approved Badge */}
-            <div className="inline-flex flex-wrap items-center gap-2 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-full border border-amber-500/40 text-xs font-bold text-amber-400 shadow-xl">
+            <div className="inline-flex flex-wrap items-center gap-1.5 bg-slate-900/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-500/40 text-[11px] font-bold text-amber-400 shadow-xl">
               <span className="flex items-center space-x-1 text-emerald-400">
                 <span>✓ TS RERA APPROVED</span>
               </span>
@@ -37,26 +37,26 @@ export default function Home() {
             </div>
 
             {/* Title & Tagline */}
-            <div className="space-y-2">
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight drop-shadow-2xl leading-tight">
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight drop-shadow-2xl leading-tight">
                 BHAVYA <span className="bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent">HOMES COUNTY</span>
               </h1>
-              <p className="text-xs sm:text-sm font-semibold text-amber-400 uppercase tracking-widest drop-shadow-md">
+              <p className="text-[11px] sm:text-xs font-bold text-amber-400 uppercase tracking-widest drop-shadow-md">
                 BUILDING A NEW FUTURE
               </p>
-              <p className="text-sm sm:text-base font-medium text-slate-200 leading-relaxed pt-1 drop-shadow-md">
+              <p className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed pt-0.5 drop-shadow-md">
                 A Premium 50-Acre Mega Real Estate Venture & Gated Community Luxury Residences in Hyderabad.
               </p>
             </div>
 
-            {/* Search Filter Box */}
-            <div className="bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-800 space-y-3 shadow-2xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            {/* Compact Search Filter Box */}
+            <div className="bg-slate-900/90 backdrop-blur-md p-3.5 rounded-2xl border border-slate-800 space-y-2.5 shadow-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                 <div>
-                  <label className="block font-bold text-amber-400 uppercase tracking-wider mb-1">
+                  <label className="block font-bold text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
                     Location Corridor
                   </label>
-                  <select className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2.5 outline-none focus:border-amber-500 font-medium">
+                  <select className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-2.5 py-2 outline-none focus:border-amber-500 font-medium text-xs">
                     <option>Hyderabad (All Corridors)</option>
                     <option>Gachibowli Growth Corridor</option>
                     <option>Shadnagar / Pharma City</option>
@@ -65,10 +65,10 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-amber-400 uppercase tracking-wider mb-1">
+                  <label className="block font-bold text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
                     Property Category
                   </label>
-                  <select className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-3 py-2.5 outline-none focus:border-amber-500 font-medium">
+                  <select className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-2.5 py-2 outline-none focus:border-amber-500 font-medium text-xs">
                     <option>Open Plots (Gated Layout)</option>
                     <option>Luxury Villa</option>
                     <option>High-Rise Apartment</option>
@@ -76,13 +76,13 @@ export default function Home() {
                 </div>
               </div>
 
-              <button className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all uppercase tracking-wider text-xs">
+              <button className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-2.5 rounded-xl shadow-lg transition-all uppercase tracking-wider text-xs">
                 Search Venture & Availability
               </button>
             </div>
 
             {/* Key Assurance Highlights */}
-            <div className="flex flex-wrap items-center gap-4 text-[11px] font-bold text-slate-200 pt-1 drop-shadow-md">
+            <div className="flex flex-wrap items-center gap-3 text-[10px] sm:text-[11px] font-bold text-slate-200 pt-0.5 drop-shadow-md">
               <span className="flex items-center space-x-1">
                 <span className="text-emerald-400">✓</span>
                 <span>100% Clear Title</span>
@@ -98,16 +98,16 @@ export default function Home() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-wrap gap-2.5 pt-1">
               <Link
                 href="/properties"
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider"
+                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider"
               >
                 Browse All Properties
               </Link>
               <Link
                 href="/contact"
-                className="bg-slate-900/80 hover:bg-slate-900 text-white font-bold px-6 py-3 rounded-xl border border-slate-700 backdrop-blur-md transition-all text-xs uppercase tracking-wider"
+                className="bg-slate-900/80 hover:bg-slate-900 text-white font-bold px-5 py-2.5 rounded-xl border border-slate-700 backdrop-blur-md transition-all text-xs uppercase tracking-wider"
               >
                 Book Free Site Visit
               </Link>
