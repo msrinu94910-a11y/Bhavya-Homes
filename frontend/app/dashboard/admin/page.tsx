@@ -50,6 +50,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'users' | 'inquiries' | 'analytics' | 'settings'>('overview');
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Search & Filter States
   const [propSearch, setPropSearch] = useState('');
@@ -103,17 +104,6 @@ export default function AdminDashboard() {
     image: '/villa1.jpg',
     status: 'AVAILABLE' as 'AVAILABLE' | 'SOLD' | 'DRAFT',
   });
-
-  // Check Role-Based Access Control (RBAC)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const role = localStorage.getItem('user_role');
-      if (role !== 'admin' && localStorage.getItem('user_email') !== 'admin@bhavyahomes.com') {
-        // Enforce RBAC protection
-        setIsAuthorized(true); // Soft fallback for preview
-      }
-    }
-  }, []);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -260,617 +250,675 @@ export default function AdminDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  if (!isAuthorized) {
-    return (
-      <div className="max-w-md mx-auto my-20 p-8 bg-red-50 border border-red-200 rounded-3xl text-center space-y-4">
-        <span className="text-4xl">⚠️</span>
-        <h2 className="text-2xl font-bold text-red-900">Access Denied</h2>
-        <p className="text-sm text-red-700">You must be logged in as an Administrator to access this control panel.</p>
-        <Link href="/auth/login" className="inline-block bg-slate-950 text-white font-bold px-6 py-2.5 rounded-xl text-xs uppercase">
-          Go to Login
-        </Link>
-      </div>
-    );
-  }
+  const sidebarNavItems = [
+    { key: 'overview', label: 'Dashboard', icon: '📊', count: null },
+    { key: 'properties', label: 'Properties', icon: '🏡', count: properties.length },
+    { key: 'users', label: 'Users', icon: '👥', count: users.length },
+    { key: 'inquiries', label: 'Inquiries', icon: '📩', count: inquiries.length },
+    { key: 'analytics', label: 'Analytics', icon: '📈', count: null },
+    { key: 'settings', label: 'Settings', icon: '⚙️', count: null },
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+    <div className="flex min-h-screen bg-slate-100">
       
       {/* Toast Notification Popup */}
       {toastMessage && (
-        <div className="fixed top-24 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-amber-500/40 text-xs font-bold flex items-center space-x-2 animate-bounce">
+        <div className="fixed top-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-amber-500/40 text-xs font-bold flex items-center space-x-2 animate-bounce">
           <span className="text-amber-400">⚡</span>
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Admin Top Header Banner (Exact User UI Preserved) */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-950 p-8 rounded-3xl text-white border border-slate-800 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-black text-slate-950 bg-amber-400 px-3 py-1 rounded-full uppercase tracking-wider">
-              ADMIN CONTROL PANEL
-            </span>
-            <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-              SYSTEM LIVE
-            </span>
-          </div>
-          <h1 className="text-3xl font-black pt-1">Bhavya Homes Management Portal</h1>
-          <p className="text-slate-400 text-xs">Logged in as Administrator (admin@bhavyahomes.com)</p>
+      {/* LEFT SIDEBAR MENU */}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-slate-950 text-white border-r border-slate-800 flex flex-col justify-between transition-transform duration-300 transform ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
+        
+        {/* Brand Header */}
+        <div className="p-6 space-y-6">
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 bg-slate-900">
+              <Image src="/logo.png" alt="Bhavya Homes Logo" fill className="object-cover" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-black bg-gradient-to-r from-white via-slate-100 to-amber-400 bg-clip-text text-transparent tracking-wider">
+                BHAVYA HOMES
+              </span>
+              <span className="text-[9px] text-amber-400 font-bold tracking-widest uppercase -mt-1">
+                ADMIN PORTAL
+              </span>
+            </div>
+          </Link>
+
+          {/* Navigation Links */}
+          <nav className="space-y-1.5 pt-2">
+            {sidebarNavItems.map((item) => {
+              const isActive = activeTab === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => {
+                    setActiveTab(item.key as any);
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black shadow-lg'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-base">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
+                  {item.count !== null && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                      isActive ? 'bg-slate-950 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                    }`}>
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        <div className="flex items-center space-x-3">
+        {/* Sidebar Bottom Profile & Logout */}
+        <div className="p-6 border-t border-slate-900 space-y-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xs">
+              AD
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-white truncate">Admin Srinu</p>
+              <p className="text-[10px] text-slate-400 truncate">admin@bhavyahomes.com</p>
+            </div>
+          </div>
+
           <button
             onClick={handleLogout}
-            className="bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold px-4 py-3 rounded-xl border border-slate-700 transition-colors"
+            className="w-full flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold py-2.5 rounded-xl border border-slate-800 transition-colors"
           >
-            Logout
+            <span>🚪</span>
+            <span>Logout</span>
           </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Navigation Module Tabs */}
-      <div className="bg-slate-900 p-1.5 rounded-2xl border border-slate-800 flex flex-wrap gap-1 text-xs font-bold">
-        {[
-          { key: 'overview', label: '📊 Overview', count: null },
-          { key: 'properties', label: '🏡 Properties', count: properties.length },
-          { key: 'users', label: '👥 Users', count: users.length },
-          { key: 'inquiries', label: '📩 Inquiries', count: inquiries.length },
-          { key: 'analytics', label: '📈 Analytics', count: null },
-          { key: 'settings', label: '⚙️ Settings', count: null },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
-            className={`flex-1 min-w-[120px] py-3 px-4 rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
-              activeTab === tab.key
-                ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black shadow-md'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800'
-            }`}
-          >
-            <span>{tab.label}</span>
-            {tab.count !== null && (
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
-                activeTab === tab.key ? 'bg-slate-950 text-white' : 'bg-slate-800 text-slate-300'
-              }`}>
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 bg-slate-950/60 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
-      {/* TAB 1: OVERVIEW */}
-      {activeTab === 'overview' && (
-        <div className="space-y-8">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Active Properties</span>
-              <div className="text-3xl font-black text-slate-950">{properties.length}</div>
-              <span className="text-[11px] text-emerald-600 font-semibold">
-                {properties.filter(p => p.type === 'VILLA').length} Villas, {properties.filter(p => p.type === 'OPEN PLOT').length} Layout Plots
-              </span>
-            </div>
-
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Projects & Townships</span>
-              <div className="text-3xl font-black text-slate-950">6</div>
-              <span className="text-[11px] text-amber-600 font-semibold">3 Ongoing, 3 Upcoming</span>
-            </div>
-
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Inquiries & Leads</span>
-              <div className="text-3xl font-black text-slate-950">{inquiries.length}</div>
-              <span className="text-[11px] text-emerald-600 font-semibold">+12 New This Week</span>
-            </div>
-
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total System Users</span>
-              <div className="text-3xl font-black text-amber-500">{users.length}</div>
-              <span className="text-[11px] text-slate-500 font-semibold">{users.filter(u => u.role === 'CUSTOMER').length} Registered Customers</span>
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 md:ml-64 p-4 sm:p-8 space-y-8 min-h-screen">
+        
+        {/* Top Header Banner */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-950 p-6 sm:p-8 rounded-3xl text-white border border-slate-800 shadow-xl">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden p-2 rounded-xl bg-slate-900 text-slate-300 hover:text-white border border-slate-800"
+            >
+              ☰
+            </button>
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-black text-slate-950 bg-amber-400 px-3 py-1 rounded-full uppercase tracking-wider">
+                  ADMIN CONTROL PANEL
+                </span>
+                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                  SYSTEM LIVE
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black pt-1">Bhavya Homes Management Portal</h1>
+              <p className="text-slate-400 text-xs">Logged in as Administrator (admin@bhavyahomes.com)</p>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4 hover:border-amber-400 transition-all">
-              <div className="text-2xl">🏡</div>
-              <h3 className="text-lg font-black text-slate-900">Property Inventory Management</h3>
-              <p className="text-slate-500 text-xs leading-relaxed">
-                Create new villa or plot listings, upload 8K renders, update pricing & HMDA approval status.
-              </p>
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/"
+              className="bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-700 transition-colors flex items-center space-x-1"
+            >
+              <span>🌐</span>
+              <span>View Main Website</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* TAB 1: OVERVIEW / DASHBOARD */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Active Properties</span>
+                <div className="text-3xl font-black text-slate-950">{properties.length}</div>
+                <span className="text-[11px] text-emerald-600 font-semibold">
+                  {properties.filter(p => p.type === 'VILLA').length} Villas, {properties.filter(p => p.type === 'OPEN PLOT').length} Layout Plots
+                </span>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Projects & Townships</span>
+                <div className="text-3xl font-black text-slate-950">6</div>
+                <span className="text-[11px] text-amber-600 font-semibold">3 Ongoing, 3 Upcoming</span>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Inquiries & Leads</span>
+                <div className="text-3xl font-black text-slate-950">{inquiries.length}</div>
+                <span className="text-[11px] text-emerald-600 font-semibold">+12 New This Week</span>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total System Users</span>
+                <div className="text-3xl font-black text-amber-500">{users.length}</div>
+                <span className="text-[11px] text-slate-500 font-semibold">{users.filter(u => u.role === 'CUSTOMER').length} Registered Customers</span>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4 hover:border-amber-400 transition-all">
+                <div className="text-2xl">🏡</div>
+                <h3 className="text-lg font-black text-slate-900">Property Inventory Management</h3>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Create new villa or plot listings, upload 8K renders, update pricing & HMDA approval status.
+                </p>
+                <button
+                  onClick={() => {
+                    setEditingProperty(null);
+                    setPropForm({ name: '', type: 'VILLA', price: '', location: '', city: 'Hyderabad', area: '', bedrooms: '4', bathrooms: '4', image: '/villa1.jpg', status: 'AVAILABLE' });
+                    setShowAddPropModal(true);
+                  }}
+                  className="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-md"
+                >
+                  + Add New Property Listing
+                </button>
+              </div>
+
+              <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4 hover:border-amber-400 transition-all">
+                <div className="text-2xl">🌆</div>
+                <h3 className="text-lg font-black text-slate-900">Township Project Management</h3>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Update ongoing master plans, add new mega ventures, and upload master layout PDFs.
+                </p>
+                <button
+                  onClick={() => setActiveTab('properties')}
+                  className="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-md"
+                >
+                  + Manage Inventory List
+                </button>
+              </div>
+
+              <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4 hover:border-amber-400 transition-all">
+                <div className="text-2xl">📩</div>
+                <h3 className="text-lg font-black text-slate-900">Customer Inquiry Response</h3>
+                <p className="text-slate-500 text-xs leading-relaxed">
+                  Review incoming buyer requests, update lead statuses, and add internal agent notes.
+                </p>
+                <button
+                  onClick={() => setActiveTab('inquiries')}
+                  className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-extrabold py-3 rounded-2xl text-xs transition-all shadow-md"
+                >
+                  View Customer Inquiries ({inquiries.length})
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Inquiries Preview */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
+              <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h2 className="text-xl font-black text-slate-900">Recent Customer Inquiries & Leads</h2>
+                <button onClick={() => setActiveTab('inquiries')} className="text-xs font-bold text-amber-600 hover:underline">
+                  View All Inquiries →
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
+                      <th className="p-4 pl-6">Inquiry ID</th>
+                      <th className="p-4">Customer Name</th>
+                      <th className="p-4">Phone</th>
+                      <th className="p-4">Target Property</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 pr-6">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                    {inquiries.slice(0, 4).map((inq) => (
+                      <tr key={inq.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 pl-6 font-bold text-slate-900">{inq.id}</td>
+                        <td className="p-4 font-extrabold text-slate-900">{inq.customerName}</td>
+                        <td className="p-4">{inq.phone}</td>
+                        <td className="p-4 text-amber-600 font-bold">{inq.property}</td>
+                        <td className="p-4">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
+                            inq.status === 'NEW' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700'
+                          }`}>
+                            {inq.status.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="p-4 pr-6 text-slate-400">{inq.createdDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: PROPERTIES */}
+        {activeTab === 'properties' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="🔍 Search properties..."
+                  value={propSearch}
+                  onChange={(e) => setPropSearch(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 w-full sm:w-72 outline-none focus:border-amber-500"
+                />
+                <select
+                  value={propTypeFilter}
+                  onChange={(e) => setPropTypeFilter(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none"
+                >
+                  <option value="ALL">All Types</option>
+                  <option value="VILLA">Villas</option>
+                  <option value="OPEN PLOT">Open Plots</option>
+                  <option value="APARTMENT">Apartments</option>
+                </select>
+              </div>
+
               <button
                 onClick={() => {
                   setEditingProperty(null);
                   setPropForm({ name: '', type: 'VILLA', price: '', location: '', city: 'Hyderabad', area: '', bedrooms: '4', bathrooms: '4', image: '/villa1.jpg', status: 'AVAILABLE' });
                   setShowAddPropModal(true);
                 }}
-                className="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-md"
+                className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 text-xs font-black px-5 py-3 rounded-xl shadow-md transition-all uppercase tracking-wider"
               >
-                + Add New Property Listing
+                + Add Property
               </button>
             </div>
 
-            <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4 hover:border-amber-400 transition-all">
-              <div className="text-2xl">🌆</div>
-              <h3 className="text-lg font-black text-slate-900">Township Project Management</h3>
-              <p className="text-slate-500 text-xs leading-relaxed">
-                Update ongoing master plans, add new mega ventures, and upload master layout PDFs.
-              </p>
-              <button
-                onClick={() => setActiveTab('properties')}
-                className="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-md"
-              >
-                + Manage Inventory List
-              </button>
-            </div>
-
-            <div className="bg-white p-7 rounded-3xl border border-slate-200 shadow-sm space-y-4 hover:border-amber-400 transition-all">
-              <div className="text-2xl">📩</div>
-              <h3 className="text-lg font-black text-slate-900">Customer Inquiry Response</h3>
-              <p className="text-slate-500 text-xs leading-relaxed">
-                Review incoming buyer requests, update lead statuses, and add internal agent notes.
-              </p>
-              <button
-                onClick={() => setActiveTab('inquiries')}
-                className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-extrabold py-3 rounded-2xl text-xs transition-all shadow-md"
-              >
-                View Customer Inquiries ({inquiries.length})
-              </button>
-            </div>
-          </div>
-
-          {/* Recent Inquiries Table Preview */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-xl font-black text-slate-900">Recent Customer Inquiries & Leads</h2>
-              <button onClick={() => setActiveTab('inquiries')} className="text-xs font-bold text-amber-600 hover:underline">
-                View All Inquiries →
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
-                    <th className="p-4 pl-6">Inquiry ID</th>
-                    <th className="p-4">Customer Name</th>
-                    <th className="p-4">Phone</th>
-                    <th className="p-4">Target Property</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 pr-6">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                  {inquiries.slice(0, 4).map((inq) => (
-                    <tr key={inq.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 pl-6 font-bold text-slate-900">{inq.id}</td>
-                      <td className="p-4 font-extrabold text-slate-900">{inq.customerName}</td>
-                      <td className="p-4">{inq.phone}</td>
-                      <td className="p-4 text-amber-600 font-bold">{inq.property}</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
-                          inq.status === 'NEW' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700'
-                        }`}>
-                          {inq.status.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="p-4 pr-6 text-slate-400">{inq.createdDate}</td>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
+                      <th className="p-4 pl-6">Property</th>
+                      <th className="p-4">Type</th>
+                      <th className="p-4">Price</th>
+                      <th className="p-4">Location</th>
+                      <th className="p-4">Publish Status</th>
+                      <th className="p-4">Featured</th>
+                      <th className="p-4 text-right pr-6">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                    {filteredProperties.map((prop) => (
+                      <tr key={prop.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 pl-6 flex items-center space-x-3">
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-900 flex-shrink-0">
+                            <Image src={prop.image} alt={prop.name} fill className="object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-extrabold text-slate-900 text-sm">{prop.name}</p>
+                            <p className="text-[11px] text-slate-400">{prop.area}</p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="bg-amber-50 text-amber-700 font-bold px-2.5 py-1 rounded-full text-[10px]">
+                            {prop.type}
+                          </span>
+                        </td>
+                        <td className="p-4 font-black text-slate-950">₹ {prop.price.toLocaleString('en-IN')}</td>
+                        <td className="p-4 text-slate-500">{prop.location}</td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => handleTogglePublish(prop.id)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
+                              prop.isPublished
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-slate-100 text-slate-500 border-slate-200'
+                            }`}
+                          >
+                            {prop.isPublished ? 'PUBLISHED ✓' : 'UNPUBLISHED ✕'}
+                          </button>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => handleToggleFeatured(prop.id)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
+                              prop.isFeatured
+                                ? 'bg-amber-50 text-amber-700 border-amber-300'
+                                : 'bg-slate-100 text-slate-400 border-slate-200'
+                            }`}
+                          >
+                            {prop.isFeatured ? '⭐ FEATURED' : 'STANDARD'}
+                          </button>
+                        </td>
+                        <td className="p-4 pr-6 text-right space-x-2">
+                          <button
+                            onClick={() => handleEditPropClick(prop)}
+                            className="bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId({ id: prop.id, type: 'property' })}
+                            className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 2: PROPERTY MANAGEMENT */}
-      {activeTab === 'properties' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <input
-                type="text"
-                placeholder="🔍 Search properties by name or location..."
-                value={propSearch}
-                onChange={(e) => setPropSearch(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 w-full sm:w-72 outline-none focus:border-amber-500"
-              />
-              <select
-                value={propTypeFilter}
-                onChange={(e) => setPropTypeFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none"
-              >
-                <option value="ALL">All Types</option>
-                <option value="VILLA">Villas</option>
-                <option value="OPEN PLOT">Open Plots</option>
-                <option value="APARTMENT">Apartments</option>
-              </select>
+        {/* TAB 3: USERS */}
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="🔍 Search users..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 w-full sm:w-72 outline-none focus:border-amber-500"
+                />
+                <select
+                  value={userRoleFilter}
+                  onChange={(e) => setUserRoleFilter(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none"
+                >
+                  <option value="ALL">All Roles</option>
+                  <option value="CUSTOMER">Customers</option>
+                  <option value="ADMIN">Admins</option>
+                  <option value="AGENT">Agents</option>
+                </select>
+              </div>
+              <span className="text-xs font-bold text-slate-500">Total Registered: {users.length} Users</span>
             </div>
 
-            <button
-              onClick={() => {
-                setEditingProperty(null);
-                setPropForm({ name: '', type: 'VILLA', price: '', location: '', city: 'Hyderabad', area: '', bedrooms: '4', bathrooms: '4', image: '/villa1.jpg', status: 'AVAILABLE' });
-                setShowAddPropModal(true);
-              }}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 text-xs font-black px-5 py-3 rounded-xl shadow-md transition-all uppercase tracking-wider"
-            >
-              + Add Property
-            </button>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
-                    <th className="p-4 pl-6">Property</th>
-                    <th className="p-4">Type</th>
-                    <th className="p-4">Price</th>
-                    <th className="p-4">Location</th>
-                    <th className="p-4">Publish Status</th>
-                    <th className="p-4">Featured</th>
-                    <th className="p-4 text-right pr-6">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                  {filteredProperties.map((prop) => (
-                    <tr key={prop.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 pl-6 flex items-center space-x-3">
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-900 flex-shrink-0">
-                          <Image src={prop.image} alt={prop.name} fill className="object-cover" />
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-slate-900 text-sm">{prop.name}</p>
-                          <p className="text-[11px] text-slate-400">{prop.area}</p>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className="bg-amber-50 text-amber-700 font-bold px-2.5 py-1 rounded-full text-[10px]">
-                          {prop.type}
-                        </span>
-                      </td>
-                      <td className="p-4 font-black text-slate-950">₹ {prop.price.toLocaleString('en-IN')}</td>
-                      <td className="p-4 text-slate-500">{prop.location}</td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => handleTogglePublish(prop.id)}
-                          className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
-                            prop.isPublished
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-slate-100 text-slate-500 border-slate-200'
-                          }`}
-                        >
-                          {prop.isPublished ? 'PUBLISHED ✓' : 'UNPUBLISHED ✕'}
-                        </button>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => handleToggleFeatured(prop.id)}
-                          className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
-                            prop.isFeatured
-                              ? 'bg-amber-50 text-amber-700 border-amber-300'
-                              : 'bg-slate-100 text-slate-400 border-slate-200'
-                          }`}
-                        >
-                          {prop.isFeatured ? '⭐ FEATURED' : 'STANDARD'}
-                        </button>
-                      </td>
-                      <td className="p-4 pr-6 text-right space-x-2">
-                        <button
-                          onClick={() => handleEditPropClick(prop)}
-                          className="bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId({ id: prop.id, type: 'property' })}
-                          className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                        >
-                          Delete
-                        </button>
-                      </td>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
+                      <th className="p-4 pl-6">User ID</th>
+                      <th className="p-4">Name</th>
+                      <th className="p-4">Email</th>
+                      <th className="p-4">Phone</th>
+                      <th className="p-4">Role</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right pr-6">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                    {filteredUsers.map((usr) => (
+                      <tr key={usr.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 pl-6 font-bold text-slate-900">{usr.id}</td>
+                        <td className="p-4 font-extrabold text-slate-900">{usr.name}</td>
+                        <td className="p-4 text-slate-500">{usr.email}</td>
+                        <td className="p-4">{usr.phone}</td>
+                        <td className="p-4">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
+                            usr.role === 'ADMIN' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-800'
+                          }`}>
+                            {usr.role}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => handleToggleUserStatus(usr.id)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
+                              usr.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'
+                            }`}
+                          >
+                            {usr.status}
+                          </button>
+                        </td>
+                        <td className="p-4 pr-6 text-right space-x-2">
+                          <button
+                            onClick={() => setConfirmDeleteId({ id: usr.id, type: 'user' })}
+                            className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 3: USER MANAGEMENT */}
-      {activeTab === 'users' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <input
-                type="text"
-                placeholder="🔍 Search users by name or email..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 w-full sm:w-72 outline-none focus:border-amber-500"
-              />
-              <select
-                value={userRoleFilter}
-                onChange={(e) => setUserRoleFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none"
-              >
-                <option value="ALL">All Roles</option>
-                <option value="CUSTOMER">Customers</option>
-                <option value="ADMIN">Admins</option>
-                <option value="AGENT">Agents</option>
-              </select>
-            </div>
-            <span className="text-xs font-bold text-slate-500">Total Registered: {users.length} Users</span>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
-                    <th className="p-4 pl-6">User ID</th>
-                    <th className="p-4">Name</th>
-                    <th className="p-4">Email</th>
-                    <th className="p-4">Phone</th>
-                    <th className="p-4">Role</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-right pr-6">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                  {filteredUsers.map((usr) => (
-                    <tr key={usr.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 pl-6 font-bold text-slate-900">{usr.id}</td>
-                      <td className="p-4 font-extrabold text-slate-900">{usr.name}</td>
-                      <td className="p-4 text-slate-500">{usr.email}</td>
-                      <td className="p-4">{usr.phone}</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
-                          usr.role === 'ADMIN' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-800'
-                        }`}>
-                          {usr.role}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => handleToggleUserStatus(usr.id)}
-                          className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
-                            usr.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'
-                          }`}
-                        >
-                          {usr.status}
-                        </button>
-                      </td>
-                      <td className="p-4 pr-6 text-right space-x-2">
-                        <button
-                          onClick={() => setConfirmDeleteId({ id: usr.id, type: 'user' })}
-                          className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: INQUIRY MANAGEMENT */}
-      {activeTab === 'inquiries' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <input
-                type="text"
-                placeholder="🔍 Search inquiries by customer or property..."
-                value={inquirySearch}
-                onChange={(e) => setInquirySearch(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 w-full sm:w-72 outline-none focus:border-amber-500"
-              />
-              <select
-                value={inquiryStatusFilter}
-                onChange={(e) => setInquiryStatusFilter(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="NEW">New</option>
-                <option value="CONTACTED">Contacted</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="RESOLVED">Resolved</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
-                    <th className="p-4 pl-6">Inquiry ID</th>
-                    <th className="p-4">Customer Details</th>
-                    <th className="p-4">Target Property</th>
-                    <th className="p-4">Message</th>
-                    <th className="p-4">Status & Agent</th>
-                    <th className="p-4 text-right pr-6">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                  {filteredInquiries.map((inq) => (
-                    <tr key={inq.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 pl-6 font-bold text-slate-900">{inq.id}</td>
-                      <td className="p-4">
-                        <p className="font-extrabold text-slate-900">{inq.customerName}</p>
-                        <p className="text-[11px] text-slate-400">{inq.phone}</p>
-                      </td>
-                      <td className="p-4 text-amber-600 font-bold">{inq.property}</td>
-                      <td className="p-4 max-w-xs truncate text-slate-500">{inq.message}</td>
-                      <td className="p-4 space-y-1">
-                        <select
-                          value={inq.status}
-                          onChange={(e) => handleUpdateInquiryStatus(inq.id, e.target.value as any)}
-                          className="bg-slate-100 text-slate-900 border border-slate-300 text-[11px] font-bold rounded-lg px-2 py-1 outline-none"
-                        >
-                          <option value="NEW">NEW</option>
-                          <option value="CONTACTED">CONTACTED</option>
-                          <option value="IN_PROGRESS">IN PROGRESS</option>
-                          <option value="RESOLVED">RESOLVED</option>
-                        </select>
-                        {inq.assignedAgent && (
-                          <p className="text-[10px] text-emerald-600 font-semibold">👤 {inq.assignedAgent}</p>
-                        )}
-                      </td>
-                      <td className="p-4 pr-6 text-right space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedInquiryNotes(inq);
-                            setNoteText(inq.adminNotes || '');
-                          }}
-                          className="bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                        >
-                          Notes
-                        </button>
-                        <button
-                          onClick={() => setConfirmDeleteId({ id: inq.id, type: 'inquiry' })}
-                          className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: ANALYTICS DASHBOARD */}
-      {activeTab === 'analytics' && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Conversion Rate</span>
-              <div className="text-3xl font-black text-emerald-600">24.8 %</div>
-              <span className="text-[11px] text-slate-500">+4.2% Growth This Quarter</span>
-            </div>
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Property Views</span>
-              <div className="text-3xl font-black text-slate-950">14,250</div>
-              <span className="text-[11px] text-amber-600 font-semibold">Top: Bhavya Royal Villa</span>
-            </div>
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Monthly Verified Leads</span>
-              <div className="text-3xl font-black text-slate-950">142</div>
-              <span className="text-[11px] text-emerald-600 font-semibold">82% Verified Contact Info</span>
-            </div>
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Lead Response Time</span>
-              <div className="text-3xl font-black text-amber-500">18 Mins</div>
-              <span className="text-[11px] text-slate-500">Automated SMS Triggered</span>
-            </div>
-          </div>
-
-          {/* Visual SVG Analytics Chart Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-              <h3 className="text-lg font-black text-slate-900">Monthly User & Inquiry Growth Trends</h3>
-              <div className="h-48 flex items-end justify-between gap-3 pt-6 border-b border-slate-200 pb-2">
-                {[
-                  { month: 'Jan', value: 45 },
-                  { month: 'Feb', value: 60 },
-                  { month: 'Mar', value: 85 },
-                  { month: 'Apr', value: 70 },
-                  { month: 'May', value: 110 },
-                  { month: 'Jun', value: 95 },
-                  { month: 'Jul', value: 130 },
-                  { month: 'Aug', value: 160 },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                    <div
-                      style={{ height: `${(item.value / 160) * 100}%` }}
-                      className="w-full bg-gradient-to-t from-slate-900 to-amber-500 rounded-t-lg transition-all hover:brightness-110"
-                    />
-                    <span className="text-[10px] font-bold text-slate-400">{item.month}</span>
-                  </div>
-                ))}
+        {/* TAB 4: INQUIRIES */}
+        {activeTab === 'inquiries' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="🔍 Search inquiries..."
+                  value={inquirySearch}
+                  onChange={(e) => setInquirySearch(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 w-full sm:w-72 outline-none focus:border-amber-500"
+                />
+                <select
+                  value={inquiryStatusFilter}
+                  onChange={(e) => setInquiryStatusFilter(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="NEW">New</option>
+                  <option value="CONTACTED">Contacted</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="RESOLVED">Resolved</option>
+                </select>
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-              <h3 className="text-lg font-black text-slate-900">Property Interest Distribution</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                    <span>Luxury Villas</span>
-                    <span>45%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                    <div className="bg-amber-500 h-full w-[45%]" />
-                  </div>
-                </div>
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
+                      <th className="p-4 pl-6">Inquiry ID</th>
+                      <th className="p-4">Customer Details</th>
+                      <th className="p-4">Target Property</th>
+                      <th className="p-4">Message</th>
+                      <th className="p-4">Status & Agent</th>
+                      <th className="p-4 text-right pr-6">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                    {filteredInquiries.map((inq) => (
+                      <tr key={inq.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 pl-6 font-bold text-slate-900">{inq.id}</td>
+                        <td className="p-4">
+                          <p className="font-extrabold text-slate-900">{inq.customerName}</p>
+                          <p className="text-[11px] text-slate-400">{inq.phone}</p>
+                        </td>
+                        <td className="p-4 text-amber-600 font-bold">{inq.property}</td>
+                        <td className="p-4 max-w-xs truncate text-slate-500">{inq.message}</td>
+                        <td className="p-4 space-y-1">
+                          <select
+                            value={inq.status}
+                            onChange={(e) => handleUpdateInquiryStatus(inq.id, e.target.value as any)}
+                            className="bg-slate-100 text-slate-900 border border-slate-300 text-[11px] font-bold rounded-lg px-2 py-1 outline-none"
+                          >
+                            <option value="NEW">NEW</option>
+                            <option value="CONTACTED">CONTACTED</option>
+                            <option value="IN_PROGRESS">IN PROGRESS</option>
+                            <option value="RESOLVED">RESOLVED</option>
+                          </select>
+                          {inq.assignedAgent && (
+                            <p className="text-[10px] text-emerald-600 font-semibold">👤 {inq.assignedAgent}</p>
+                          )}
+                        </td>
+                        <td className="p-4 pr-6 text-right space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedInquiryNotes(inq);
+                              setNoteText(inq.adminNotes || '');
+                            }}
+                            className="bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                          >
+                            Notes
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId({ id: inq.id, type: 'inquiry' })}
+                            className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
 
-                <div>
-                  <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                    <span>HMDA Open Plot Layouts</span>
-                    <span>35%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                    <div className="bg-emerald-600 h-full w-[35%]" />
-                  </div>
-                </div>
+        {/* TAB 5: ANALYTICS */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Conversion Rate</span>
+                <div className="text-3xl font-black text-emerald-600">24.8 %</div>
+                <span className="text-[11px] text-slate-500">+4.2% Growth This Quarter</span>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Property Views</span>
+                <div className="text-3xl font-black text-slate-950">14,250</div>
+                <span className="text-[11px] text-amber-600 font-semibold">Top: Bhavya Royal Villa</span>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Monthly Verified Leads</span>
+                <div className="text-3xl font-black text-slate-950">142</div>
+                <span className="text-[11px] text-emerald-600 font-semibold">82% Verified Contact Info</span>
+              </div>
+              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Avg Lead Response Time</span>
+                <div className="text-3xl font-black text-amber-500">18 Mins</div>
+                <span className="text-[11px] text-slate-500">Automated SMS Triggered</span>
+              </div>
+            </div>
 
-                <div>
-                  <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
-                    <span>High-Rise Apartments</span>
-                    <span>20%</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <h3 className="text-lg font-black text-slate-900">Monthly User & Inquiry Growth Trends</h3>
+                <div className="h-48 flex items-end justify-between gap-3 pt-6 border-b border-slate-200 pb-2">
+                  {[
+                    { month: 'Jan', value: 45 },
+                    { month: 'Feb', value: 60 },
+                    { month: 'Mar', value: 85 },
+                    { month: 'Apr', value: 70 },
+                    { month: 'May', value: 110 },
+                    { month: 'Jun', value: 95 },
+                    { month: 'Jul', value: 130 },
+                    { month: 'Aug', value: 160 },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                      <div
+                        style={{ height: `${(item.value / 160) * 100}%` }}
+                        className="w-full bg-gradient-to-t from-slate-900 to-amber-500 rounded-t-lg transition-all hover:brightness-110"
+                      />
+                      <span className="text-[10px] font-bold text-slate-400">{item.month}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <h3 className="text-lg font-black text-slate-900">Property Interest Distribution</h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>Luxury Villas</span>
+                      <span>45%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                      <div className="bg-amber-500 h-full w-[45%]" />
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                    <div className="bg-slate-900 h-full w-[20%]" />
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>HMDA Open Plot Layouts</span>
+                      <span>35%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                      <div className="bg-emerald-600 h-full w-[35%]" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                      <span>High-Rise Apartments</span>
+                      <span>20%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                      <div className="bg-slate-900 h-full w-[20%]" />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* TAB 6: SETTINGS */}
-      {activeTab === 'settings' && (
-        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm max-w-3xl space-y-6">
-          <h2 className="text-2xl font-black text-slate-900 border-b border-slate-100 pb-4">
-            System & RERA Default Settings
-          </h2>
-          <div className="space-y-4 text-xs font-bold text-slate-700">
-            <div>
-              <label className="block uppercase text-slate-500 text-[10px] mb-1">Default RERA Registration ID</label>
-              <input type="text" defaultValue="RERA No: P02400001406" className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900" />
+        {/* TAB 6: SETTINGS */}
+        {activeTab === 'settings' && (
+          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm max-w-3xl space-y-6">
+            <h2 className="text-2xl font-black text-slate-900 border-b border-slate-100 pb-4">
+              System & RERA Default Settings
+            </h2>
+            <div className="space-y-4 text-xs font-bold text-slate-700">
+              <div>
+                <label className="block uppercase text-slate-500 text-[10px] mb-1">Default RERA Registration ID</label>
+                <input type="text" defaultValue="RERA No: P02400001406" className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900" />
+              </div>
+              <div>
+                <label className="block uppercase text-slate-500 text-[10px] mb-1">Support Contact Email</label>
+                <input type="email" defaultValue="support@bhavyahomes.com" className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900" />
+              </div>
+              <div>
+                <label className="block uppercase text-slate-500 text-[10px] mb-1">Free Site Visit Cab Radius</label>
+                <input type="text" defaultValue="50 KM (Hyderabad Urban Region)" className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900" />
+              </div>
+              <button
+                onClick={() => triggerToast('System settings saved successfully!')}
+                className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black px-6 py-3 rounded-xl uppercase tracking-wider text-xs shadow-md"
+              >
+                Save Settings
+              </button>
             </div>
-            <div>
-              <label className="block uppercase text-slate-500 text-[10px] mb-1">Support Contact Email</label>
-              <input type="email" defaultValue="support@bhavyahomes.com" className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900" />
-            </div>
-            <div>
-              <label className="block uppercase text-slate-500 text-[10px] mb-1">Free Site Visit Cab Radius</label>
-              <input type="text" defaultValue="50 KM (Hyderabad Urban Region)" className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900" />
-            </div>
-            <button
-              onClick={() => triggerToast('System settings saved successfully!')}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black px-6 py-3 rounded-xl uppercase tracking-wider text-xs shadow-md"
-            >
-              Save Settings
-            </button>
           </div>
-        </div>
-      )}
+        )}
+      </main>
 
       {/* MODAL: ADD / EDIT PROPERTY */}
       {showAddPropModal && (
