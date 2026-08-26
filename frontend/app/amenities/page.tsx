@@ -33,11 +33,21 @@ export default function AmenitiesPage() {
     },
   ];
 
-  const infrastructureHighlights = [
-    { icon: '🛣️', title: "60' & 40' Blacktop Roads", desc: 'Wide asphalt roads engineered with underground storm water drains and avenue plantation.' },
-    { icon: '⚡', title: 'Underground Power Cabling', desc: 'Concealed electrical lines with individual transformer sub-stations and LED streetlights.' },
-    { icon: '💧', title: '24/7 Water Overhead Tank', desc: 'Dedicated water storage tank connected to individual plot water pipelines & STP plant.' },
-    { icon: '📜', title: '100% HMDA & RERA Approved', desc: 'Completely clear title venture with compound wall surrounding the entire 50-acre township.' },
+  const circularAmenities = [
+    { title: 'OCCUPANCY CERTIFICATE OBTAINED', icon: '📜' },
+    { title: 'HMDA APPROVED LAYOUT', icon: '✔️' },
+    { title: 'AVENUE PLANTATION', icon: '🌳' },
+    { title: 'CHILDREN PARK CUM PLAY AREA', icon: '🛝' },
+    { title: 'PREMIUM LANDSCAPING', icon: '🏡' },
+    { title: 'ENTRANCE GATE WITH DESIGNED ARCH', icon: '⛩️' },
+    { title: 'UNDERGROUND DRAINAGE', icon: '🕳️' },
+    { title: '100% VASTHU', icon: '🧭' },
+    { title: 'BT ROADS', icon: '🛣️' },
+    { title: 'OVER HEAD TANK', icon: '🚰' },
+    { title: 'GOOD GROUND WATER', icon: '💧' },
+    { title: 'ELECTRICITY WITH STREET LIGHTS', icon: '💡' },
+    { title: 'NO POLLUTION', icon: '🍃' },
+    { title: 'BANK LOAN FACILITY AVAILABLE', icon: '🏦' },
   ];
 
   return (
@@ -110,27 +120,37 @@ export default function AmenitiesPage() {
         ))}
       </section>
 
-      {/* Grid of Infrastructure Perks */}
+      {/* Complete Venture Infrastructure Features (Exact Reference Screenshot Icon Grid) */}
       <section className="bg-slate-950 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-black text-amber-400">Complete Venture Infrastructure Features</h2>
+            <h2 className="text-3xl font-black text-amber-400">
+              Complete Venture Infrastructure Features
+            </h2>
+            <p className="text-xl font-extrabold text-white tracking-wide">
+              Experience the Art of Opulence in its True Sense
+            </p>
             <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto">
               Every plot and villa in Bhavya Homes County is backed by 100% legal compliance and master-planned execution.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {infrastructureHighlights.map((perk, idx) => (
-              <div key={idx} className="bg-slate-900/90 p-6 rounded-3xl border border-slate-800 space-y-3 hover:border-amber-500/50 transition-all">
-                <div className="text-3xl">{perk.icon}</div>
-                <h3 className="text-base font-bold text-white">{perk.title}</h3>
-                <p className="text-slate-400 text-xs leading-relaxed">{perk.desc}</p>
+          {/* 14 Circular Amenities Badges Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-y-10 gap-x-4 justify-center text-center">
+            {circularAmenities.map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center space-y-3 group cursor-pointer">
+                <div className="relative w-20 h-20 rounded-full border-2 border-slate-700 bg-slate-900/90 flex items-center justify-center text-3xl shadow-xl group-hover:border-amber-400 group-hover:scale-110 group-hover:bg-amber-400/10 transition-all duration-300">
+                  <span className="transform group-hover:scale-110 transition-transform">{item.icon}</span>
+                </div>
+                <p className="text-[10px] font-black uppercase text-slate-300 group-hover:text-amber-400 tracking-wider max-w-[120px] leading-tight transition-colors">
+                  {item.title}
+                </p>
               </div>
             ))}
           </div>
 
-          <div className="text-center pt-6">
+          <div className="text-center pt-8 border-t border-slate-900">
             <Link
               href="/properties"
               className="bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-wider shadow-lg inline-block transform hover:scale-105"
@@ -138,6 +158,7 @@ export default function AmenitiesPage() {
               Explore Available Plot & Villa Listings
             </Link>
           </div>
+
         </div>
       </section>
 
