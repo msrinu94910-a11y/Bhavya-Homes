@@ -80,7 +80,6 @@ export default function LoginPage() {
           </Link>
 
           <h1 className="text-2xl font-black text-white pt-2">Welcome Back</h1>
-          <p className="text-xs text-slate-400">Sign in to access your dashboard & saved site visits</p>
         </div>
 
         {/* Error Alert */}
