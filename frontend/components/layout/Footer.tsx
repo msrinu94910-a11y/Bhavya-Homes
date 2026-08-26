@@ -25,7 +25,7 @@ export default function Footer() {
           <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Customer Support</h4>
           <ul className="space-y-2 text-sm">
             <li><Link href="/contact" className="hover:text-gold-400 transition-colors">Contact Us</Link></li>
-            <li><Link href="/faq" className="hover:text-gold-400 transition-colors">FAQs</Link></li>
+            <li><Link href="/floor-plans" className="hover:text-gold-400 transition-colors">Floor Plans</Link></li>
             <li><Link href="/dashboard/customer" className="hover:text-gold-400 transition-colors">Customer Portal</Link></li>
           </ul>
         </div>

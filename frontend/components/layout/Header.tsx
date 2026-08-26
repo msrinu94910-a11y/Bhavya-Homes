@@ -56,7 +56,7 @@ export default function Header() {
     { name: 'PROPERTIES', href: '/properties' },
     { name: 'PROJECTS', href: '/projects' },
     { name: 'AMENITIES', href: '/amenities' },
-    { name: 'FAQ', href: '/faq' },
+    { name: 'FLOOR PLANS', href: '/floor-plans' },
     { name: 'CONTACT', href: '/contact' },
   ];
 
