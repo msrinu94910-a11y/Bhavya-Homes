@@ -34,6 +34,11 @@ export default function Header() {
     }
   }, [pathname]);
 
+  // Hide the navbar header completely on authentication pages
+  if (pathname.startsWith('/auth')) {
+    return null;
+  }
+
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user_token');
