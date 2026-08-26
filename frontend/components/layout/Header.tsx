@@ -34,8 +34,8 @@ export default function Header() {
     }
   }, [pathname]);
 
-  // Hide the main website header completely on auth pages and admin dashboard
-  if (pathname.startsWith('/auth') || pathname.startsWith('/dashboard/admin')) {
+  // Hide the main website header completely on auth pages and dashboard routes
+  if (pathname.startsWith('/auth') || pathname.startsWith('/dashboard')) {
     return null;
   }
 
