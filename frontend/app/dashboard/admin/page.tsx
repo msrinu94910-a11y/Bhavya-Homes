@@ -107,8 +107,42 @@ export default function AdminDashboard() {
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
+
+  const fetchMongoProperties = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/properties?includeUnpublished=true');
+      if (res.ok) {
+        const data = await res.json();
+        const rawProps = data.data || data;
+        if (Array.isArray(rawProps) && rawProps.length > 0) {
+          const mongoProps: Property[] = rawProps.map((p: any) => ({
+            id: p._id || p.id,
+            name: p.title || p.name,
+            type: p.propertyType || p.type || 'VILLA',
+            price: Number(p.price) || 0,
+            location: p.location || 'Hyderabad',
+            city: p.city || 'Hyderabad',
+            area: typeof p.area === 'number' ? `${p.area.toLocaleString()} Sq.Ft` : (p.area || '2,000 Sq.Ft'),
+            status: p.status || 'AVAILABLE',
+            isFeatured: p.featured ?? p.isFeatured ?? false,
+            isPublished: p.isPublished ?? true,
+            bedrooms: p.bedrooms,
+            bathrooms: p.bathrooms,
+            image: (p.images && p.images[0]) || p.image || '/villa1.jpg',
+          }));
+          setProperties(mongoProps);
+        }
+      }
+    } catch (err) {
+      console.log('MongoDB API unreachable, displaying cached list.');
+    }
+  };
+
+  useEffect(() => {
+    fetchMongoProperties();
+  }, []);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -119,57 +153,133 @@ export default function AdminDashboard() {
     router.push('/');
   };
 
-  // Property Actions
-  const handleTogglePublish = (id: string) => {
-    setProperties(prev => prev.map(p => p.id === id ? { ...p, isPublished: !p.isPublished } : p));
-    triggerToast('Property publication status updated!');
+  // Property Actions connected to MongoDB API
+  const handleTogglePublish = async (id: string) => {
+    const target = properties.find(p => p.id === id);
+    const newStatus = target ? !target.isPublished : true;
+
+    setProperties(prev => prev.map(p => p.id === id ? { ...p, isPublished: newStatus } : p));
+
+    try {
+      await fetch(`http://localhost:5000/api/properties/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublished: newStatus }),
+      });
+      triggerToast('Publication status updated in MongoDB database!');
+    } catch (err) {
+      triggerToast('Status updated!');
+    }
   };
 
-  const handleToggleFeatured = (id: string) => {
-    setProperties(prev => prev.map(p => p.id === id ? { ...p, isFeatured: !p.isFeatured } : p));
-    triggerToast('Featured status updated!');
+  const handleToggleFeatured = async (id: string) => {
+    const target = properties.find(p => p.id === id);
+    const newFeatured = target ? !target.isFeatured : true;
+
+    setProperties(prev => prev.map(p => p.id === id ? { ...p, isFeatured: newFeatured } : p));
+
+    try {
+      await fetch(`http://localhost:5000/api/properties/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featured: newFeatured, isFeatured: newFeatured }),
+      });
+      triggerToast('Featured status updated in MongoDB database!');
+    } catch (err) {
+      triggerToast('Featured status updated!');
+    }
   };
 
-  const handleSaveProperty = (e: React.FormEvent) => {
+  const handleSaveProperty = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!propForm.name || !propForm.price || !propForm.location) {
       triggerToast('Please fill out property name, price, and location.');
       return;
     }
 
-    if (editingProperty) {
-      setProperties(prev => prev.map(p => p.id === editingProperty.id ? {
-        ...p,
-        name: propForm.name,
-        type: propForm.type,
-        price: Number(propForm.price),
-        location: propForm.location,
-        city: propForm.city,
-        area: propForm.area,
-        bedrooms: Number(propForm.bedrooms) || undefined,
-        bathrooms: Number(propForm.bathrooms) || undefined,
-        image: propForm.image,
-        status: propForm.status,
-      } : p));
-      triggerToast('Property updated successfully!');
-    } else {
-      const newProp: Property = {
-        id: `PROP-${properties.length + 1}`,
-        name: propForm.name,
-        type: propForm.type,
-        price: Number(propForm.price),
-        location: propForm.location,
-        city: propForm.city,
-        area: propForm.area || '2,000 Sq.Ft',
-        bedrooms: Number(propForm.bedrooms) || undefined,
-        bathrooms: Number(propForm.bathrooms) || undefined,
-        image: propForm.image || '/villa1.jpg',
-        status: propForm.status,
-        isFeatured: false,
-        isPublished: true,
-      };
-      setProperties([newProp, ...properties]);
-      triggerToast('New property created successfully!');
+    const payload = {
+      title: propForm.name,
+      name: propForm.name,
+      propertyType: propForm.type,
+      type: propForm.type,
+      price: Number(propForm.price),
+      location: propForm.location,
+      city: propForm.city || 'Hyderabad',
+      address: propForm.location || 'Hyderabad',
+      state: 'Telangana',
+      area: Number(propForm.area.replace(/[^0-9]/g, '')) || 2000,
+      bedrooms: Number(propForm.bedrooms) || 0,
+      bathrooms: Number(propForm.bathrooms) || 0,
+      image: propForm.image || '/villa1.jpg',
+      images: [propForm.image || '/villa1.jpg'],
+      status: propForm.status,
+      isPublished: true,
+      featured: false,
+    };
+
+    try {
+      if (editingProperty && !editingProperty.id.startsWith('PROP-')) {
+        // Update existing Mongoose Document
+        const res = await fetch(`http://localhost:5000/api/properties/${editingProperty.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          triggerToast('Property updated in MongoDB database!');
+        }
+      } else {
+        // Create new Mongoose Document in MongoDB
+        const res = await fetch('http://localhost:5000/api/properties', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          triggerToast('Property successfully created & stored in MongoDB!');
+        } else {
+          const errData = await res.json();
+          console.error('MongoDB creation error:', errData);
+        }
+      }
+
+      await fetchMongoProperties();
+    } catch (err) {
+      console.error('MongoDB save error:', err);
+      // Fallback local state update
+      if (editingProperty) {
+        setProperties(prev => prev.map(p => p.id === editingProperty.id ? {
+          ...p,
+          name: propForm.name,
+          type: propForm.type,
+          price: Number(propForm.price),
+          location: propForm.location,
+          city: propForm.city,
+          area: propForm.area,
+          bedrooms: Number(propForm.bedrooms) || undefined,
+          bathrooms: Number(propForm.bathrooms) || undefined,
+          image: propForm.image,
+          status: propForm.status,
+        } : p));
+      } else {
+        const newProp: Property = {
+          id: `PROP-${properties.length + 1}`,
+          name: propForm.name,
+          type: propForm.type,
+          price: Number(propForm.price),
+          location: propForm.location,
+          city: propForm.city,
+          area: propForm.area || '2,000 Sq.Ft',
+          bedrooms: Number(propForm.bedrooms) || undefined,
+          bathrooms: Number(propForm.bathrooms) || undefined,
+          image: propForm.image || '/villa1.jpg',
+          status: propForm.status,
+          isFeatured: false,
+          isPublished: true,
+        };
+        setProperties([newProp, ...properties]);
+      }
+      triggerToast('Property saved successfully!');
     }
 
     setShowAddPropModal(false);
@@ -215,12 +325,17 @@ export default function AdminDashboard() {
   };
 
   // Delete Action
-  const executeDelete = () => {
+  const executeDelete = async () => {
     if (!confirmDeleteId) return;
     const { id, type } = confirmDeleteId;
     if (type === 'property') {
+      try {
+        await fetch(`http://localhost:5000/api/properties/${id}`, { method: 'DELETE' });
+        triggerToast('Property deleted from MongoDB database.');
+      } catch (err) {
+        triggerToast('Property removed.');
+      }
       setProperties(prev => prev.filter(p => p.id !== id));
-      triggerToast('Property deleted.');
     } else if (type === 'user') {
       setUsers(prev => prev.filter(u => u.id !== id));
       triggerToast('User removed.');

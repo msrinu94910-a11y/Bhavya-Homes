@@ -1,10 +1,14 @@
-import { Property, IProperty } from '../models/Property.js';
+import { Property, IProperty, PropertyType, PropertyStatus, AreaUnit } from '../models/Property.js';
 import { getPagination } from '../utils/pagination.js';
 
 export class PropertyService {
   static async getAllProperties(query: any) {
     const { page, limit, skip } = getPagination(query.page, query.limit);
-    const filter: any = { isDeleted: false, isPublished: true };
+    const filter: any = { isDeleted: false };
+
+    if (query.includeUnpublished !== 'true') {
+      filter.isPublished = true;
+    }
 
     if (query.city) filter.city = new RegExp(query.city, 'i');
     if (query.propertyType) filter.propertyType = query.propertyType;
@@ -44,14 +48,43 @@ export class PropertyService {
     return property;
   }
 
-  static async createProperty(data: Partial<IProperty>, userId: string) {
-    const slug = data.slug || data.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const property = await Property.create({ ...data, slug, createdBy: userId });
+  static async createProperty(data: any, userId: string) {
+    const title = data.title || data.name || 'Bhavya Homes Venture Property';
+    const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = data.slug || `${baseSlug}-${Date.now().toString().slice(-4)}`;
+
+    const property = await Property.create({
+      title,
+      slug,
+      description: data.description || `${title} located in ${data.location || 'Hyderabad'}. Prime real estate venture developed by Bhavya Homes.`,
+      propertyType: data.propertyType || data.type || PropertyType.VILLA,
+      price: Number(data.price) || 5000000,
+      location: data.location || 'Hyderabad',
+      address: data.address || data.location || 'Bhavya Homes Venture',
+      city: data.city || 'Hyderabad',
+      state: data.state || 'Telangana',
+      area: Number(data.area) || 2000,
+      areaUnit: data.areaUnit || (data.type === 'OPEN PLOT' ? AreaUnit.SQ_YD : AreaUnit.SQ_FT),
+      bedrooms: Number(data.bedrooms) || 0,
+      bathrooms: Number(data.bathrooms) || 0,
+      amenities: data.amenities || ['24/7 Security', 'Blacktop Roads', 'Underground Drainage'],
+      images: Array.isArray(data.images) ? data.images : [data.image || '/villa1.jpg'],
+      videos: data.videos || [],
+      status: data.status || PropertyStatus.AVAILABLE,
+      featured: data.featured ?? data.isFeatured ?? false,
+      isPublished: data.isPublished ?? true,
+      createdBy: userId,
+    });
     return property;
   }
 
-  static async updateProperty(id: string, data: Partial<IProperty>) {
-    const property = await Property.findOneAndUpdate({ _id: id, isDeleted: false }, data, { new: true });
+  static async updateProperty(id: string, data: any) {
+    const updatePayload: any = { ...data };
+    if (data.name) updatePayload.title = data.name;
+    if (data.type) updatePayload.propertyType = data.type;
+    if (data.isFeatured !== undefined) updatePayload.featured = data.isFeatured;
+
+    const property = await Property.findOneAndUpdate({ _id: id, isDeleted: false }, updatePayload, { new: true });
     if (!property) throw new Error('Property not found');
     return property;
   }

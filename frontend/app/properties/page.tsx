@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -69,13 +69,36 @@ const initialProperties: PropertyItem[] = [
 ];
 
 export default function PropertiesPage() {
+  const [properties, setProperties] = useState<PropertyItem[]>(initialProperties);
   const [selectedType, setSelectedType] = useState('ALL');
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/properties')
+      .then(res => res.json())
+      .then(data => {
+        const rawProps = data.data || data;
+        if (Array.isArray(rawProps) && rawProps.length > 0) {
+          const loaded: PropertyItem[] = rawProps.map((p: any) => ({
+            id: p._id || p.id,
+            title: p.title || p.name,
+            slug: p.slug || (p.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            price: Number(p.price) || 0,
+            location: p.location.includes('Hyderabad') ? p.location : `${p.location}, ${p.city || 'Hyderabad'}`,
+            image: (p.images && p.images[0]) || p.image || '/villa1.jpg',
+            type: p.propertyType || p.type || 'VILLA',
+            area: typeof p.area === 'number' ? `${p.area.toLocaleString()} Sq.Ft` : p.area,
+          }));
+          setProperties(loaded);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const filterTypes = ['ALL', 'VILLA', 'OPEN PLOT', 'APARTMENT'];
 
   const filteredProperties = selectedType === 'ALL'
-    ? initialProperties
-    : initialProperties.filter(p => p.type === selectedType);
+    ? properties
+    : properties.filter(p => p.type === selectedType);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
