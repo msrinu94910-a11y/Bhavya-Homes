@@ -34,8 +34,8 @@ export default function Header() {
     }
   }, [pathname]);
 
-  // Hide the navbar header completely on authentication pages
-  if (pathname.startsWith('/auth')) {
+  // Hide the main website header completely on auth pages and admin dashboard
+  if (pathname.startsWith('/auth') || pathname.startsWith('/dashboard/admin')) {
     return null;
   }
 
