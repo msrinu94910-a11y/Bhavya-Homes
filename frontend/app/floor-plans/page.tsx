@@ -56,7 +56,7 @@ export default function FloorPlansPage() {
       area: '1,850 Sq.Ft (High-Rise Tower)',
       facing: 'North-East Corner Unit',
       approval: 'GHMC / RERA Approved',
-      image: '/floor-plan-villa.jpg',
+      image: '/floor-plan-apartment.jpg',
       highlights: [
         'Spacious Foyer Entry & Double Balconies',
         'Master Bedroom with Wooden Flooring',
