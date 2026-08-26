@@ -5,8 +5,8 @@ export default function Home() {
   return (
     <div className="space-y-16">
       
-      {/* 100% Crystal-Clear Architectural Hero Banner */}
-      <section className="relative w-full bg-slate-950">
+      {/* 100% Crystal-Clear Architectural Hero Banner with Top Spacing */}
+      <section className="relative w-full bg-slate-950 pt-10 sm:pt-12 md:pt-14">
         
         {/* Main 100% Clear Image Container with NO Dark Gradients Masking Building */}
         <div className="relative w-full h-[65vh] sm:h-[75vh] md:h-[80vh] overflow-hidden">
