@@ -7,24 +7,11 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [role, setRole] = useState<'customer' | 'admin'>('customer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const handleQuickFill = (targetRole: 'customer' | 'admin') => {
-    setRole(targetRole);
-    if (targetRole === 'customer') {
-      setEmail('customer@bhavyahomes.com');
-      setPassword('password123');
-    } else {
-      setEmail('admin@bhavyahomes.com');
-      setPassword('admin123');
-    }
-    setError('');
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,16 +22,17 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    // Simulate authentication process and save session token
+    const isAdmin = email.toLowerCase().includes('admin');
+
     setTimeout(() => {
       setLoading(false);
       if (typeof window !== 'undefined') {
         localStorage.setItem('user_token', 'mock_jwt_token_123');
-        localStorage.setItem('user_role', role);
+        localStorage.setItem('user_role', isAdmin ? 'admin' : 'customer');
         localStorage.setItem('user_email', email);
       }
 
-      if (role === 'admin') {
+      if (isAdmin) {
         router.push('/dashboard/admin');
       } else {
         router.push('/dashboard/customer');
@@ -86,39 +74,13 @@ export default function LoginPage() {
                 BHAVYA HOMES
               </span>
               <span className="text-[10px] text-amber-400 font-bold tracking-widest uppercase block -mt-1">
-                PORTAL LOGIN
+                SIGN IN
               </span>
             </div>
           </Link>
 
           <h1 className="text-2xl font-black text-white pt-2">Welcome Back</h1>
-          <p className="text-xs text-slate-400">Sign in to access your customer dashboard & saved site visits</p>
-        </div>
-
-        {/* Role Toggle Switcher */}
-        <div className="bg-slate-950 p-1.5 rounded-2xl border border-slate-800 flex text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => setRole('customer')}
-            className={`flex-1 py-2.5 rounded-xl transition-all ${
-              role === 'customer'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            👤 Customer Login
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole('admin')}
-            className={`flex-1 py-2.5 rounded-xl transition-all ${
-              role === 'admin'
-                ? 'bg-amber-500 text-slate-950 font-black shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            🛡️ Admin / Agent
-          </button>
+          <p className="text-xs text-slate-400">Sign in to access your dashboard & saved site visits</p>
         </div>
 
         {/* Error Alert */}
@@ -136,16 +98,14 @@ export default function LoginPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
               Email Address
             </label>
-            <div className="relative">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3.5 text-sm placeholder-slate-600 transition-all outline-none"
-                required
-              />
-            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3.5 text-sm placeholder-slate-600 transition-all outline-none"
+              required
+            />
           </div>
 
           {/* Password Input */}
@@ -180,34 +140,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Quick Demo Fill Shortcut Buttons */}
-          <div className="flex items-center justify-between text-[11px] pt-1">
-            <span className="text-slate-500 font-medium">Testing shortcuts:</span>
-            <div className="flex space-x-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('customer')}
-                className="text-amber-400 hover:text-amber-300 bg-amber-400/10 px-2.5 py-1 rounded-lg font-bold border border-amber-400/20"
-              >
-                ⚡ Fill Customer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('admin')}
-                className="text-amber-400 hover:text-amber-300 bg-amber-400/10 px-2.5 py-1 rounded-lg font-bold border border-amber-400/20"
-              >
-                ⚡ Fill Admin
-              </button>
-            </div>
-          </div>
-
           {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-wider text-sm transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? 'Authenticating...' : `Sign In to ${role === 'admin' ? 'Admin Portal' : 'Dashboard'}`}
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
