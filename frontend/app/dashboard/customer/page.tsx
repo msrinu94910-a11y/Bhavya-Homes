@@ -14,8 +14,17 @@ export default function CustomerDashboard() {
     if (typeof window !== 'undefined') {
       const email = localStorage.getItem('user_email');
       const name = localStorage.getItem('user_name');
-      if (email) setUserEmail(email);
-      if (name) setUserName(name);
+      if (email) {
+        setUserEmail(email);
+        if (name) {
+          setUserName(name);
+        } else {
+          // Extract display name from email (e.g. balu@gmail.com -> Balu)
+          let derived = email.split('@')[0];
+          derived = derived.charAt(0).toUpperCase() + derived.slice(1);
+          setUserName(derived);
+        }
+      }
     }
   }, []);
 

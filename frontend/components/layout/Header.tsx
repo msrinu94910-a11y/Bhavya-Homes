@@ -1,13 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<{ email: string; name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const email = localStorage.getItem('user_email');
+      const role = localStorage.getItem('user_role');
+      const name = localStorage.getItem('user_name');
+      
+      if (email || role) {
+        let displayName = name;
+        if (!displayName && email) {
+          displayName = email.split('@')[0];
+          displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+        }
+        setUser({
+          email: email || 'user@bhavyahomes.com',
+          name: displayName || 'Customer',
+          role: role || 'customer',
+        });
+      } else {
+        setUser(null);
+      }
+    }
+  }, [pathname]);
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user_token');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('user_name');
+    }
+    setUser(null);
+    router.push('/auth/login');
+  };
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -18,6 +54,8 @@ export default function Header() {
     { name: 'FAQ', href: '/faq' },
     { name: 'Contact', href: '/contact' },
   ];
+
+  const dashboardHref = user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/customer';
 
   return (
     <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 text-white shadow-xl">
@@ -64,14 +102,38 @@ export default function Header() {
           })}
         </nav>
 
-        {/* Right Actions: Login & Book Site Visit */}
+        {/* Right Actions: Dynamic User Profile / Login & Book Visit */}
         <div className="flex items-center space-x-3 sm:space-x-4">
-          <Link
-            href="/auth/login"
-            className="hidden sm:inline-block text-xs font-semibold text-slate-300 hover:text-white px-2 py-2 transition-colors"
-          >
-            Login
-          </Link>
+          
+          {user ? (
+            <div className="flex items-center space-x-2">
+              <Link
+                href={dashboardHref}
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                  pathname.startsWith('/dashboard')
+                    ? 'bg-amber-500 text-slate-950 border-amber-400'
+                    : 'bg-slate-900 text-amber-400 border-slate-800 hover:bg-slate-800'
+                }`}
+              >
+                <span>👤</span>
+                <span>{user.name}</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="hidden sm:inline-block text-xs font-semibold text-slate-400 hover:text-red-400 px-2 py-1 transition-colors"
+                title="Logout"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="hidden sm:inline-block text-xs font-semibold text-slate-300 hover:text-white px-2 py-2 transition-colors"
+            >
+              Login
+            </Link>
+          )}
 
           <Link
             href="/contact"
@@ -116,6 +178,19 @@ export default function Header() {
               </Link>
             );
           })}
+          {user && (
+            <div className="pt-2 border-t border-slate-800">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full text-left text-xs font-bold text-red-400 py-2 px-4"
+              >
+                Logout ({user.name})
+              </button>
+            </div>
+          )}
         </div>
       )}
     </header>
