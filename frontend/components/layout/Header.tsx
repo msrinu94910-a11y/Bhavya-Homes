@@ -46,13 +46,13 @@ export default function Header() {
   };
 
   const navLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'About', href: '/about' },
-    { name: 'Properties', href: '/properties' },
-    { name: 'Projects', href: '/projects' },
-    { name: 'Services', href: '/services' },
+    { name: 'HOME', href: '/' },
+    { name: 'ABOUT', href: '/about' },
+    { name: 'PROPERTIES', href: '/properties' },
+    { name: 'PROJECTS', href: '/projects' },
+    { name: 'SERVICES', href: '/services' },
     { name: 'FAQ', href: '/faq' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'CONTACT', href: '/contact' },
   ];
 
   const dashboardHref = user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/customer';
@@ -83,7 +83,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center space-x-8 text-sm font-semibold tracking-wide">
+        <nav className="hidden lg:flex items-center space-x-7 text-xs font-bold uppercase tracking-wider text-slate-300">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -92,7 +92,7 @@ export default function Header() {
                 href={link.href}
                 className={`transition-colors py-1 border-b-2 ${
                   isActive
-                    ? 'text-amber-500 font-bold border-amber-500'
+                    ? 'text-amber-500 border-amber-500 font-black'
                     : 'text-slate-200 border-transparent hover:text-amber-400 hover:border-amber-400/50'
                 }`}
               >
