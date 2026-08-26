@@ -5,21 +5,21 @@ export default function Home() {
   return (
     <div className="space-y-16">
       
-      {/* 100% Crystal-Clear Architectural Hero Banner with Top Spacing */}
-      <section className="relative w-full bg-slate-950 pt-10 sm:pt-12 md:pt-14">
+      {/* 100% Uncropped Architectural Hero Banner */}
+      <section className="relative w-full bg-slate-950">
         
-        {/* Main 100% Clear Image Container with NO Dark Gradients Masking Building */}
-        <div className="relative w-full h-[65vh] sm:h-[75vh] md:h-[80vh] overflow-hidden">
+        {/* Aspect Ratio Container for 100% Full Uncropped Entrance Gate View */}
+        <div className="relative w-full aspect-[16/9] max-h-[80vh] min-h-[420px] bg-slate-950 overflow-hidden flex items-center justify-center">
           <Image
             src="/hero-bg.jpg"
             alt="Bhavya Homes County Gated Community Entrance Arch"
             fill
             priority
-            className="object-cover object-center"
+            className="object-contain md:object-cover object-center"
           />
 
           {/* Floating RERA & HMDA Badge Card on Bottom-Right */}
-          <div className="absolute bottom-6 right-6 z-10 bg-white/95 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-2xl border border-amber-400/50 flex flex-wrap items-center space-x-3 text-slate-900 text-xs font-bold">
+          <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-10 bg-white/95 backdrop-blur-md px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl shadow-2xl border border-amber-400/50 flex flex-wrap items-center space-x-2 sm:space-x-3 text-slate-900 text-[11px] sm:text-xs font-bold">
             <span className="text-slate-800">Rera No: P02400001406</span>
             <span className="text-slate-300">|</span>
             <span className="text-emerald-700 font-extrabold">TS RERA</span>
