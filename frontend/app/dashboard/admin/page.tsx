@@ -116,7 +116,7 @@ export default function AdminDashboard() {
       localStorage.removeItem('user_role');
       localStorage.removeItem('user_email');
     }
-    router.push('/auth/login');
+    router.push('/');
   };
 
   // Property Actions

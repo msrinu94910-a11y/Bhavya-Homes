@@ -35,7 +35,7 @@ export default function CustomerDashboard() {
       localStorage.removeItem('user_email');
       localStorage.removeItem('user_name');
     }
-    router.push('/auth/login');
+    router.push('/');
   };
 
   const sampleVisits = [

@@ -47,7 +47,7 @@ export default function Header() {
       localStorage.removeItem('user_name');
     }
     setUser(null);
-    router.push('/auth/login');
+    router.push('/');
   };
 
   const navLinks = [
