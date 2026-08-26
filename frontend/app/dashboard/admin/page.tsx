@@ -207,7 +207,7 @@ export default function AdminDashboard() {
       city: propForm.city || 'Hyderabad',
       address: propForm.location || 'Hyderabad',
       state: 'Telangana',
-      area: Number(propForm.area.replace(/[^0-9]/g, '')) || 2000,
+      area: parseInt(propForm.area.match(/\d+/)?.[0] || '2000', 10),
       bedrooms: Number(propForm.bedrooms) || 0,
       bathrooms: Number(propForm.bathrooms) || 0,
       image: propForm.image || '/villa1.jpg',

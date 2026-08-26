@@ -53,26 +53,38 @@ export class PropertyService {
     const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const slug = data.slug || `${baseSlug}-${Date.now().toString().slice(-4)}`;
 
+    // Safe normalization of propertyType to valid Mongoose Enum
+    let normalizedType = PropertyType.VILLA;
+    const rawType = (data.propertyType || data.type || '').toString().toUpperCase().trim();
+    if (rawType.includes('PLOT')) normalizedType = PropertyType.OPEN_PLOT;
+    else if (rawType.includes('APARTMENT') || rawType.includes('FLAT')) normalizedType = PropertyType.APARTMENT;
+    else if (rawType.includes('COMMERCIAL')) normalizedType = PropertyType.COMMERCIAL;
+    else if (rawType.includes('VILLA')) normalizedType = PropertyType.VILLA;
+
+    // Parse clean number for area (handling strings like '3800sqft,200yds')
+    const rawAreaStr = String(data.area || '');
+    const parsedArea = parseInt(rawAreaStr.replace(/[^0-9]/g, ''), 10) || 2000;
+
     const property = await Property.create({
       title,
       slug,
       description: data.description || `${title} located in ${data.location || 'Hyderabad'}. Prime real estate venture developed by Bhavya Homes.`,
-      propertyType: data.propertyType || data.type || PropertyType.VILLA,
+      propertyType: normalizedType,
       price: Number(data.price) || 5000000,
       location: data.location || 'Hyderabad',
       address: data.address || data.location || 'Bhavya Homes Venture',
       city: data.city || 'Hyderabad',
       state: data.state || 'Telangana',
-      area: Number(data.area) || 2000,
-      areaUnit: data.areaUnit || (data.type === 'OPEN PLOT' ? AreaUnit.SQ_YD : AreaUnit.SQ_FT),
+      area: parsedArea,
+      areaUnit: data.areaUnit || (normalizedType === PropertyType.OPEN_PLOT ? AreaUnit.SQ_YD : AreaUnit.SQ_FT),
       bedrooms: Number(data.bedrooms) || 0,
       bathrooms: Number(data.bathrooms) || 0,
       amenities: data.amenities || ['24/7 Security', 'Blacktop Roads', 'Underground Drainage'],
-      images: Array.isArray(data.images) ? data.images : [data.image || '/villa1.jpg'],
+      images: Array.isArray(data.images) && data.images.length > 0 ? data.images : [data.image || '/villa1.jpg'],
       videos: data.videos || [],
       status: data.status || PropertyStatus.AVAILABLE,
-      featured: data.featured ?? data.isFeatured ?? false,
-      isPublished: data.isPublished ?? true,
+      featured: Boolean(data.featured ?? data.isFeatured ?? false),
+      isPublished: Boolean(data.isPublished ?? true),
       createdBy: userId,
     });
     return property;
@@ -81,7 +93,14 @@ export class PropertyService {
   static async updateProperty(id: string, data: any) {
     const updatePayload: any = { ...data };
     if (data.name) updatePayload.title = data.name;
-    if (data.type) updatePayload.propertyType = data.type;
+
+    if (data.propertyType || data.type) {
+      const rawType = (data.propertyType || data.type || '').toString().toUpperCase().trim();
+      if (rawType.includes('PLOT')) updatePayload.propertyType = PropertyType.OPEN_PLOT;
+      else if (rawType.includes('APARTMENT')) updatePayload.propertyType = PropertyType.APARTMENT;
+      else updatePayload.propertyType = PropertyType.VILLA;
+    }
+
     if (data.isFeatured !== undefined) updatePayload.featured = data.isFeatured;
 
     const property = await Property.findOneAndUpdate({ _id: id, isDeleted: false }, updatePayload, { new: true });
