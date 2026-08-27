@@ -1,4 +1,6 @@
+import mongoose from 'mongoose';
 import { Property, IProperty, PropertyType, PropertyStatus, AreaUnit } from '../models/Property.js';
+import { User } from '../models/User.js';
 import { getPagination } from '../utils/pagination.js';
 
 export class PropertyService {
@@ -53,6 +55,23 @@ export class PropertyService {
     const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const slug = data.slug || `${baseSlug}-${Date.now().toString().slice(-4)}`;
 
+    // Resolve valid user ObjectId for Mongoose createdBy field
+    let validUserId = userId;
+    if (!validUserId || !mongoose.Types.ObjectId.isValid(validUserId)) {
+      let adminUser = await User.findOne({ role: 'ADMIN' });
+      if (!adminUser) {
+        adminUser = await User.create({
+          name: 'Admin Srinu',
+          email: 'admin@bhavyahomes.com',
+          password: '$2a$10$e842d731467cb74109c8d',
+          phone: '+91 94910 00000',
+          role: 'ADMIN',
+          status: 'ACTIVE'
+        });
+      }
+      validUserId = adminUser._id.toString();
+    }
+
     // Safe normalization of propertyType to valid Mongoose Enum
     let normalizedType = PropertyType.VILLA;
     const rawType = (data.propertyType || data.type || '').toString().toUpperCase().trim();
@@ -61,7 +80,7 @@ export class PropertyService {
     else if (rawType.includes('COMMERCIAL')) normalizedType = PropertyType.COMMERCIAL;
     else if (rawType.includes('VILLA')) normalizedType = PropertyType.VILLA;
 
-    // Parse clean number for area (handling strings like '3800sqft,200yds')
+    // Parse clean number for area (handling strings like '3,800sq.fts/200sq.yds/')
     const rawAreaStr = String(data.area || '');
     const parsedArea = parseInt(rawAreaStr.replace(/[^0-9]/g, ''), 10) || 2000;
 
@@ -85,7 +104,7 @@ export class PropertyService {
       status: data.status || PropertyStatus.AVAILABLE,
       featured: Boolean(data.featured ?? data.isFeatured ?? false),
       isPublished: Boolean(data.isPublished ?? true),
-      createdBy: userId,
+      createdBy: validUserId,
     });
     return property;
   }

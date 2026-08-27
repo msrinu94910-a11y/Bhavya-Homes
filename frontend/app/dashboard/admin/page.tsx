@@ -1184,10 +1184,9 @@ export default function AdminDashboard() {
               <div className="pt-4 flex space-x-3">
                 <button
                   type="submit"
-                  disabled={isSavingProp}
                   className="flex-1 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3.5 rounded-xl uppercase tracking-wider text-xs shadow-lg transition-all"
                 >
-                  {isSavingProp ? 'Saving to Database...' : 'Save Property'}
+                  SAVE PROPERTY
                 </button>
                 <button
                   type="button"
