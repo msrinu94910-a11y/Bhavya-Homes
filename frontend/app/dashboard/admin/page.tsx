@@ -67,6 +67,8 @@ export default function AdminDashboard() {
   const [selectedInquiryNotes, setSelectedInquiryNotes] = useState<Inquiry | null>(null);
   const [noteText, setNoteText] = useState('');
 
+  const [isSavingProp, setIsSavingProp] = useState(false);
+
   // Initial Data Mock (aligned with Mongoose Backend APIs)
   const [properties, setProperties] = useState<Property[]>([
     { id: 'PROP-1', name: 'Bhavya Royal Luxury Villa', type: 'VILLA', price: 18500000, location: 'Gachibowli', city: 'Hyderabad', area: '3,800 Sq.Ft', status: 'AVAILABLE', isFeatured: true, isPublished: true, bedrooms: 4, bathrooms: 4, image: '/villa1.jpg' },
@@ -219,10 +221,14 @@ export default function AdminDashboard() {
 
   const handleSaveProperty = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+
     if (!propForm.name || !propForm.price || !propForm.location) {
       triggerToast('Please fill out property name, price, and location.');
       return;
     }
+
+    setIsSavingProp(true);
 
     const payload = {
       title: propForm.name,
@@ -245,6 +251,7 @@ export default function AdminDashboard() {
     };
 
     try {
+      let createdProp: Property | null = null;
       if (editingProperty && !editingProperty.id.startsWith('PROP-')) {
         // Update existing Mongoose Document
         const res = await fetch(`http://localhost:5000/api/properties/${editingProperty.id}`, {
@@ -263,54 +270,59 @@ export default function AdminDashboard() {
           body: JSON.stringify(payload),
         });
         if (res.ok) {
+          const resJson = await res.json();
+          const p = resJson.data || resJson;
+          createdProp = {
+            id: p._id || p.id || `PROP-${Date.now()}`,
+            name: p.title || p.name || propForm.name,
+            type: p.propertyType || p.type || propForm.type,
+            price: Number(p.price) || Number(propForm.price),
+            location: p.location || propForm.location,
+            city: p.city || propForm.city,
+            area: typeof p.area === 'number' ? `${p.area.toLocaleString()} Sq.Ft` : (propForm.area || '2,000 Sq.Ft'),
+            status: p.status || propForm.status,
+            isFeatured: p.featured ?? false,
+            isPublished: p.isPublished ?? true,
+            bedrooms: p.bedrooms || Number(propForm.bedrooms),
+            bathrooms: p.bathrooms || Number(propForm.bathrooms),
+            image: (p.images && p.images[0]) || p.image || propForm.image,
+          };
           triggerToast('Property successfully created & stored in MongoDB!');
-        } else {
-          const errData = await res.json();
-          console.error('MongoDB creation error:', errData);
         }
       }
 
+      if (createdProp) {
+        setProperties(prev => [createdProp!, ...prev.filter(item => item.id !== createdProp!.id)]);
+      }
+
       await fetchMongoProperties();
+      setShowAddPropModal(false);
+      setEditingProperty(null);
     } catch (err) {
       console.error('MongoDB save error:', err);
       // Fallback local state update
-      if (editingProperty) {
-        setProperties(prev => prev.map(p => p.id === editingProperty.id ? {
-          ...p,
-          name: propForm.name,
-          type: propForm.type,
-          price: Number(propForm.price),
-          location: propForm.location,
-          city: propForm.city,
-          area: propForm.area,
-          bedrooms: Number(propForm.bedrooms) || undefined,
-          bathrooms: Number(propForm.bathrooms) || undefined,
-          image: propForm.image,
-          status: propForm.status,
-        } : p));
-      } else {
-        const newProp: Property = {
-          id: `PROP-${properties.length + 1}`,
-          name: propForm.name,
-          type: propForm.type,
-          price: Number(propForm.price),
-          location: propForm.location,
-          city: propForm.city,
-          area: propForm.area || '2,000 Sq.Ft',
-          bedrooms: Number(propForm.bedrooms) || undefined,
-          bathrooms: Number(propForm.bathrooms) || undefined,
-          image: propForm.image || '/villa1.jpg',
-          status: propForm.status,
-          isFeatured: false,
-          isPublished: true,
-        };
-        setProperties([newProp, ...properties]);
-      }
+      const fallbackProp: Property = {
+        id: `PROP-${properties.length + 1}`,
+        name: propForm.name,
+        type: propForm.type,
+        price: Number(propForm.price),
+        location: propForm.location,
+        city: propForm.city,
+        area: propForm.area || '2,000 Sq.Ft',
+        bedrooms: Number(propForm.bedrooms) || undefined,
+        bathrooms: Number(propForm.bathrooms) || undefined,
+        image: propForm.image || '/villa1.jpg',
+        status: propForm.status,
+        isFeatured: false,
+        isPublished: true,
+      };
+      setProperties(prev => [fallbackProp, ...prev]);
       triggerToast('Property saved successfully!');
+      setShowAddPropModal(false);
+      setEditingProperty(null);
+    } finally {
+      setIsSavingProp(false);
     }
-
-    setShowAddPropModal(false);
-    setEditingProperty(null);
   };
 
   const handleEditPropClick = (prop: Property) => {
@@ -571,7 +583,10 @@ export default function AdminDashboard() {
                   Create new villa or plot listings, upload 8K renders, update pricing & HMDA approval status.
                 </p>
                 <button
-                  onClick={() => {
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setEditingProperty(null);
                     setPropForm({ name: '', type: 'VILLA', price: '', location: '', city: 'Hyderabad', area: '', bedrooms: '4', bathrooms: '4', image: '/villa1.jpg', status: 'AVAILABLE' });
                     setShowAddPropModal(true);
@@ -681,7 +696,10 @@ export default function AdminDashboard() {
               </div>
 
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setEditingProperty(null);
                   setPropForm({ name: '', type: 'VILLA', price: '', location: '', city: 'Hyderabad', area: '', bedrooms: '4', bathrooms: '4', image: '/villa1.jpg', status: 'AVAILABLE' });
                   setShowAddPropModal(true);
@@ -1064,13 +1082,27 @@ export default function AdminDashboard() {
 
       {/* MODAL: ADD / EDIT PROPERTY */}
       {showAddPropModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 border border-slate-200 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 border border-slate-200 shadow-2xl overflow-y-auto max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center border-b border-slate-100 pb-4">
               <h3 className="text-xl font-black text-slate-900">
                 {editingProperty ? 'Edit Property Listing' : 'Add New Property Listing'}
               </h3>
-              <button onClick={() => setShowAddPropModal(false)} className="text-slate-400 hover:text-slate-900 font-bold text-lg">✕</button>
+              <button
+                type="button"
+                onClick={() => setShowAddPropModal(false)}
+                className="text-slate-400 hover:text-slate-900 font-bold text-lg p-1"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleSaveProperty} className="space-y-4 text-xs font-semibold text-slate-700">
@@ -1081,7 +1113,7 @@ export default function AdminDashboard() {
                   value={propForm.name}
                   onChange={(e) => setPropForm({ ...propForm, name: e.target.value })}
                   placeholder="e.g. Bhavya Royal Villa"
-                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900"
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
                   required
                 />
               </div>
@@ -1092,7 +1124,7 @@ export default function AdminDashboard() {
                   <select
                     value={propForm.type}
                     onChange={(e) => setPropForm({ ...propForm, type: e.target.value })}
-                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
                   >
                     <option value="VILLA">Villa</option>
                     <option value="OPEN PLOT">Open Plot</option>
@@ -1106,7 +1138,7 @@ export default function AdminDashboard() {
                     value={propForm.price}
                     onChange={(e) => setPropForm({ ...propForm, price: e.target.value })}
                     placeholder="18500000"
-                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
                     required
                   />
                 </div>
@@ -1120,7 +1152,7 @@ export default function AdminDashboard() {
                     value={propForm.location}
                     onChange={(e) => setPropForm({ ...propForm, location: e.target.value })}
                     placeholder="Gachibowli"
-                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
                     required
                   />
                 </div>
@@ -1131,7 +1163,7 @@ export default function AdminDashboard() {
                     value={propForm.area}
                     onChange={(e) => setPropForm({ ...propForm, area: e.target.value })}
                     placeholder="3,800 Sq.Ft / 200 Sq.Yds"
-                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -1141,7 +1173,7 @@ export default function AdminDashboard() {
                 <select
                   value={propForm.image}
                   onChange={(e) => setPropForm({ ...propForm, image: e.target.value })}
-                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold"
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
                 >
                   <option value="/villa1.jpg">Luxury Villa Image (/villa1.jpg)</option>
                   <option value="/plot1.jpg">Open Plot Layout Image (/plot1.jpg)</option>
@@ -1152,14 +1184,15 @@ export default function AdminDashboard() {
               <div className="pt-4 flex space-x-3">
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3 rounded-xl uppercase tracking-wider text-xs shadow-md"
+                  disabled={isSavingProp}
+                  className="flex-1 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3.5 rounded-xl uppercase tracking-wider text-xs shadow-lg transition-all"
                 >
-                  Save Property
+                  {isSavingProp ? 'Saving to Database...' : 'Save Property'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddPropModal(false)}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3 rounded-xl text-xs"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3.5 rounded-xl text-xs"
                 >
                   Cancel
                 </button>
