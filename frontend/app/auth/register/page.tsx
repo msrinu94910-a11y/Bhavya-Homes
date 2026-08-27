@@ -12,15 +12,16 @@ export default function RegisterPage() {
     email: '',
     phone: '',
     password: '',
+    role: 'CUSTOMER',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.phone || !formData.password) {
       setError('Please fill out all required fields.');
@@ -29,16 +30,38 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: formData.role,
+        }),
+      });
+
+      const data = await res.json();
+
       if (typeof window !== 'undefined') {
-        localStorage.setItem('user_token', 'mock_jwt_token_456');
-        localStorage.setItem('user_role', 'customer');
+        localStorage.setItem('user_token', data.data?.token || 'token_123');
+        localStorage.setItem('user_role', formData.role.toLowerCase());
         localStorage.setItem('user_name', formData.fullName);
         localStorage.setItem('user_email', formData.email);
       }
-      router.push('/dashboard/customer');
-    }, 800);
+
+      if (formData.role === 'AGENT') {
+        router.push('/dashboard/agent');
+      } else {
+        router.push('/dashboard/customer');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,7 +104,7 @@ export default function RegisterPage() {
           </Link>
 
           <h1 className="text-2xl font-black text-white pt-2">Join Bhavya Homes</h1>
-          <p className="text-xs text-slate-400">Register to schedule site visits & track property inquiries</p>
+          <p className="text-xs text-slate-400">Register as a Customer or Agent to access real estate services</p>
         </div>
 
         {error && (
@@ -92,6 +115,19 @@ export default function RegisterPage() {
 
         {/* Form Container */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Account Type</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white font-bold rounded-2xl px-4 py-3 text-sm outline-none"
+            >
+              <option value="CUSTOMER">Customer Account</option>
+              <option value="AGENT">Real Estate Agent Account</option>
+            </select>
+          </div>
+
           <div className="space-y-1.5">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Full Name</label>
             <input
@@ -149,7 +185,7 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-wider text-sm transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? 'Registering...' : 'Create Account'}
+            {loading ? 'Registering...' : `Create ${formData.role === 'AGENT' ? 'Agent' : 'Customer'} Account`}
           </button>
         </form>
 

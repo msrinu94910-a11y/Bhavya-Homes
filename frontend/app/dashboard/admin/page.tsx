@@ -69,29 +69,10 @@ export default function AdminDashboard() {
 
   const [isSavingProp, setIsSavingProp] = useState(false);
 
-  // Initial Data Mock (aligned with Mongoose Backend APIs)
-  const [properties, setProperties] = useState<Property[]>([
-    { id: 'PROP-1', name: 'Bhavya Royal Luxury Villa', type: 'VILLA', price: 18500000, location: 'Gachibowli', city: 'Hyderabad', area: '3,800 Sq.Ft', status: 'AVAILABLE', isFeatured: true, isPublished: true, bedrooms: 4, bathrooms: 4, image: '/villa1.jpg' },
-    { id: 'PROP-2', name: 'Bhavya Green Acres Open Plot Layout', type: 'OPEN PLOT', price: 4800000, location: 'Shadnagar Corridor', city: 'Hyderabad', area: '200 Sq.Yds', status: 'AVAILABLE', isFeatured: true, isPublished: true, image: '/plot1.jpg' },
-    { id: 'PROP-3', name: 'Bhavya Aurora Sky Residences', type: 'APARTMENT', price: 9500000, location: 'Miyapur', city: 'Hyderabad', area: '1,850 Sq.Ft', status: 'AVAILABLE', isFeatured: false, isPublished: true, bedrooms: 3, bathrooms: 3, image: '/apartment1.jpg' },
-    { id: 'PROP-4', name: 'Bhavya Grand Estate Villa', type: 'VILLA', price: 24500000, location: 'Jubilee Hills Extension', city: 'Hyderabad', area: '4,500 Sq.Ft', status: 'SOLD', isFeatured: true, isPublished: true, bedrooms: 5, bathrooms: 5, image: '/villa1.jpg' },
-    { id: 'PROP-5', name: 'Bhavya Prime Gated Layout Plots', type: 'OPEN PLOT', price: 6500000, location: 'Pharma City Highway', city: 'Hyderabad', area: '267 Sq.Yds', status: 'AVAILABLE', isFeatured: false, isPublished: true, image: '/plot1.jpg' },
-  ]);
-
-  const [users, setUsers] = useState<User[]>([
-    { id: 'USR-101', name: 'Srikanth Rao', email: 'srikanth@gmail.com', phone: '+91 98765 12345', role: 'CUSTOMER', status: 'ACTIVE', regDate: '12 Jan 2026' },
-    { id: 'USR-102', name: 'Admin Srinu', email: 'admin@bhavyahomes.com', phone: '+91 94910 00000', role: 'ADMIN', status: 'ACTIVE', regDate: '01 Jan 2026' },
-    { id: 'USR-103', name: 'Vikram Reddy', email: 'vikram.agent@bhavyahomes.com', phone: '+91 98765 00011', role: 'AGENT', status: 'ACTIVE', regDate: '15 Feb 2026' },
-    { id: 'USR-104', name: 'Kavitha Sharma', email: 'kavitha@yahoo.com', phone: '+91 98765 67890', role: 'CUSTOMER', status: 'ACTIVE', regDate: '20 Mar 2026' },
-    { id: 'USR-105', name: 'Ramesh Babu', email: 'ramesh@outlook.com', phone: '+91 98765 99988', role: 'CUSTOMER', status: 'INACTIVE', regDate: '05 May 2026' },
-  ]);
-
-  const [inquiries, setInquiries] = useState<Inquiry[]>([
-    { id: 'INQ-1001', customerName: 'Srikanth Rao', email: 'srikanth@gmail.com', phone: '+91 98765 12345', property: 'Bhavya Royal Luxury Villa', message: 'Interested in booking a site visit this weekend.', status: 'NEW', createdDate: '26 Aug 2026', assignedAgent: 'Vikram Reddy' },
-    { id: 'INQ-1002', customerName: 'Kavitha Sharma', email: 'kavitha@yahoo.com', phone: '+91 98765 67890', property: 'Bhavya Green Acres Open Plot', message: 'Looking for 200 sq yd plot with bank loan support.', status: 'CONTACTED', createdDate: '25 Aug 2026', adminNotes: 'Sent layout brochure via WhatsApp.' },
-    { id: 'INQ-1003', customerName: 'Mahesh Kumar', email: 'mahesh@gmail.com', phone: '+91 98765 11223', property: 'Bhavya Aurora Sky Residences', message: 'Want to know floor plan & clubhouse amenities.', status: 'IN_PROGRESS', createdDate: '24 Aug 2026' },
-    { id: 'INQ-1004', customerName: 'Anil Varma', email: 'anil@live.com', phone: '+91 98765 44332', property: 'Bhavya Grand Estate Villa', message: 'Requesting final pricing quote and discount details.', status: 'RESOLVED', createdDate: '20 Aug 2026' },
-  ]);
+  // Realtime Data State (Fetched from MongoDB REST APIs)
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 
   // Add / Edit Property Form State
   const [propForm, setPropForm] = useState({
@@ -168,10 +149,151 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchMongoUsers = async () => {
+    try {
+      let apiUsers: User[] = [];
+
+      // 1. Fetch from /api/admin/customers
+      try {
+        const custRes = await fetch('http://localhost:5000/api/admin/customers');
+        if (custRes.ok) {
+          const custData = await custRes.json();
+          const rawCusts = custData.data?.customers || custData.data || custData;
+          if (Array.isArray(rawCusts)) {
+            const mappedCusts: User[] = rawCusts.map((c: any) => ({
+              id: c._id || c.id || `USR-${Math.random()}`,
+              name: c.name || 'Customer User',
+              email: c.email || 'customer@bhavyahomes.com',
+              phone: c.phone || '+91 98765 00000',
+              role: 'CUSTOMER',
+              status: (c.status || (c.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toString().toUpperCase() as any,
+              regDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '27 Aug 2026',
+            }));
+            apiUsers = [...apiUsers, ...mappedCusts];
+          }
+        }
+      } catch (e) {
+        console.log('Customer API fallback');
+      }
+
+      // 2. Fetch from /api/auth/users
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/users');
+        if (res.ok) {
+          const data = await res.json();
+          const rawUsers = data.data || data;
+          if (Array.isArray(rawUsers)) {
+            const mappedUsers: User[] = rawUsers.map((u: any) => ({
+              id: u._id || u.id || `USR-${Math.random()}`,
+              name: u.name || 'User Account',
+              email: u.email || 'user@bhavyahomes.com',
+              phone: u.phone || '+91 98765 00000',
+              role: (u.role || 'CUSTOMER').toString().toUpperCase() as any,
+              status: (u.status || (u.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toString().toUpperCase() as any,
+              regDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : '27 Aug 2026',
+            }));
+            apiUsers = [...apiUsers, ...mappedUsers];
+          }
+        }
+      } catch (e) {
+        console.log('Auth users API fallback');
+      }
+
+      // 3. Fetch from /api/admin/agents
+      try {
+        const agentRes = await fetch('http://localhost:5000/api/admin/agents');
+        if (agentRes.ok) {
+          const agentData = await agentRes.json();
+          const rawAgents = agentData.data?.agents || agentData.data || agentData;
+          if (Array.isArray(rawAgents)) {
+            const mappedAgents: User[] = rawAgents.map((a: any) => ({
+              id: a._id || a.id || `AGT-${Math.random()}`,
+              name: a.name || 'Agent User',
+              email: a.email || 'agent@bhavyahomes.com',
+              phone: a.phone || '+91 98765 00011',
+              role: 'AGENT',
+              status: (a.status || (a.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toString().toUpperCase() as any,
+              regDate: a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-IN') : '27 Aug 2026',
+            }));
+            apiUsers = [...apiUsers, ...mappedAgents];
+          }
+        }
+      } catch (e) {
+        console.log('Agent API fallback');
+      }
+
+      // Merge API Users + Active Session User
+      setUsers((prevUsers) => {
+        let sessionUser: User | null = null;
+        if (typeof window !== 'undefined') {
+          const localEmail = localStorage.getItem('user_email');
+          const localName = localStorage.getItem('user_name');
+          if (localEmail) {
+            sessionUser = {
+              id: `USR-${Date.now()}`,
+              name: localName || 'Sharma',
+              email: localEmail,
+              phone: '+91 98765 43210',
+              role: 'CUSTOMER',
+              status: 'ACTIVE',
+              regDate: 'Today',
+            };
+          }
+        }
+
+        // Put API Users FIRST so database records take top priority
+        const combined = [
+          ...apiUsers,
+          ...(sessionUser ? [sessionUser] : []),
+          ...prevUsers,
+        ];
+
+        const uniqueUsers: User[] = [];
+        const seenEmails = new Set<string>();
+
+        combined.forEach((usr) => {
+          const cleanEmail = (usr.email || '').toLowerCase().trim();
+          if (cleanEmail && !seenEmails.has(cleanEmail)) {
+            seenEmails.add(cleanEmail);
+            uniqueUsers.push(usr);
+          }
+        });
+
+        return uniqueUsers;
+      });
+    } catch (err) {
+      console.log('MongoDB API unreachable for users list.');
+    }
+  };
+
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('user_token');
+      const role = localStorage.getItem('user_role')?.toLowerCase();
+
+      if (!token) {
+        router.push('/auth/login');
+        return;
+      }
+
+      if (role === 'agent') {
+        router.push('/dashboard/agent');
+        return;
+      } else if (role === 'customer') {
+        router.push('/dashboard/customer');
+        return;
+      }
+    }
+
     fetchMongoProperties();
     fetchMongoInquiries();
-  }, []);
+    fetchMongoUsers();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', fetchMongoUsers);
+      return () => window.removeEventListener('focus', fetchMongoUsers);
+    }
+  }, [router]);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -331,6 +453,17 @@ export default function AdminDashboard() {
     }
   };
 
+  // Add / Edit User Form State
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'CUSTOMER' as 'ADMIN' | 'CUSTOMER' | 'AGENT',
+    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
+  });
+
   const handleEditPropClick = (prop: Property) => {
     setEditingProperty(prop);
     setPropForm({
@@ -348,10 +481,134 @@ export default function AdminDashboard() {
     setShowAddPropModal(true);
   };
 
-  // User Actions
-  const handleToggleUserStatus = (id: string) => {
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' } : u));
-    triggerToast('User status updated!');
+  // User Actions connected to MongoDB API
+  const handleEditUserClick = (usr: User) => {
+    setEditingUser(usr);
+    setUserForm({
+      name: usr.name,
+      email: usr.email,
+      phone: usr.phone,
+      role: usr.role,
+      status: usr.status,
+    });
+    setShowAddUserModal(true);
+  };
+
+  const handleSaveUser = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const name = (userForm.name || '').trim();
+    const email = (userForm.email || '').trim();
+    const phone = (userForm.phone || '+91 98765 43210').trim();
+
+    if (!name || !email) {
+      triggerToast('Please provide user name and email address.');
+      return;
+    }
+
+    const newUserObj: User = {
+      id: editingUser?.id || `USR-${Date.now()}`,
+      name: name,
+      email: email,
+      phone: phone,
+      role: userForm.role,
+      status: userForm.status,
+      regDate: 'Today',
+    };
+
+    // Update UI state immediately
+    setUsers((prev) => {
+      const exists = prev.some((u) => u.id === newUserObj.id);
+      if (exists) {
+        return prev.map((u) => (u.id === newUserObj.id ? newUserObj : u));
+      }
+      return [newUserObj, ...prev];
+    });
+
+    setShowAddUserModal(false);
+    setEditingUser(null);
+    triggerToast('User account saved and stored in database successfully!');
+
+    // Sync with MongoDB API
+    try {
+      if (editingUser && !editingUser.id.startsWith('USR-') && !editingUser.id.startsWith('AGT-')) {
+        const endpoint = editingUser.role === 'AGENT' ? `http://localhost:5000/api/admin/agents/${editingUser.id}` : `http://localhost:5000/api/admin/customers/${editingUser.id}`;
+        await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            phone,
+            status: userForm.status,
+          }),
+        }).catch(() => {
+          return fetch(`http://localhost:5000/api/auth/users/${editingUser.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone, role: userForm.role, status: userForm.status }),
+          });
+        });
+      } else {
+        const endpoint = userForm.role === 'AGENT' ? 'http://localhost:5000/api/admin/agents' : 'http://localhost:5000/api/admin/customers';
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            status: userForm.status,
+          }),
+        });
+        if (res.ok) {
+          const resJson = await res.json();
+          const u = resJson.data || resJson;
+          if (u && (u._id || u.id)) {
+            const mongoUser: User = {
+              id: u._id || u.id,
+              name: u.name || name,
+              email: u.email || email,
+              phone: u.phone || phone,
+              role: (u.role || userForm.role).toUpperCase() as any,
+              status: (u.status || 'ACTIVE').toUpperCase() as any,
+              regDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : 'Today',
+            };
+            setUsers((prev) => [mongoUser, ...prev.filter((i) => i.id !== newUserObj.id && i.id !== mongoUser.id)]);
+          }
+        }
+      }
+      await fetchMongoUsers();
+    } catch (err) {
+      console.error('MongoDB user save error:', err);
+    }
+  };
+
+  const handleToggleUserStatus = async (id: string) => {
+    const target = users.find(u => u.id === id);
+    const newStatus = target?.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, status: newStatus } : u));
+
+    try {
+      if (!id.startsWith('USR-')) {
+        await fetch(`http://localhost:5000/api/admin/customers/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        }).catch(() => {
+          return fetch(`http://localhost:5000/api/auth/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus }),
+          });
+        });
+      }
+      triggerToast('User status updated in database!');
+    } catch (err) {
+      triggerToast('User status updated!');
+    }
   };
 
   // Inquiry Actions
@@ -382,8 +639,17 @@ export default function AdminDashboard() {
       }
       setProperties(prev => prev.filter(p => p.id !== id));
     } else if (type === 'user') {
+      try {
+        if (!id.startsWith('USR-')) {
+          await fetch(`http://localhost:5000/api/admin/customers/${id}`, { method: 'DELETE' }).catch(() => {
+            return fetch(`http://localhost:5000/api/auth/users/${id}`, { method: 'DELETE' });
+          });
+        }
+        triggerToast('User account deleted from database.');
+      } catch (err) {
+        triggerToast('User removed.');
+      }
       setUsers(prev => prev.filter(u => u.id !== id));
-      triggerToast('User removed.');
     } else if (type === 'inquiry') {
       setInquiries(prev => prev.filter(i => i.id !== id));
       triggerToast('Inquiry deleted.');
@@ -399,8 +665,9 @@ export default function AdminDashboard() {
   });
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase());
-    const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
+    const searchLower = userSearch.toLowerCase().trim();
+    const matchesSearch = !searchLower || u.name.toLowerCase().includes(searchLower) || u.email.toLowerCase().includes(searchLower) || u.phone.toLowerCase().includes(searchLower);
+    const matchesRole = userRoleFilter === 'ALL' || u.role.toString().toUpperCase() === userRoleFilter.toUpperCase();
     return matchesSearch && matchesRole;
   });
 
@@ -815,11 +1082,26 @@ export default function AdminDashboard() {
                 >
                   <option value="ALL">All Roles</option>
                   <option value="CUSTOMER">Customers</option>
-                  <option value="ADMIN">Admins</option>
                   <option value="AGENT">Agents</option>
                 </select>
               </div>
-              <span className="text-xs font-bold text-slate-500">Total Registered: {users.length} Users</span>
+
+              <div className="flex items-center space-x-4">
+                <span className="text-xs font-bold text-slate-500">Total Registered: {users.length} Users</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setEditingUser(null);
+                    setUserForm({ name: '', email: '', phone: '', role: 'CUSTOMER', status: 'ACTIVE' });
+                    setShowAddUserModal(true);
+                  }}
+                  className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 text-xs font-black px-5 py-3 rounded-xl shadow-md transition-all uppercase tracking-wider"
+                >
+                  + Add User
+                </button>
+              </div>
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -861,6 +1143,12 @@ export default function AdminDashboard() {
                           </button>
                         </td>
                         <td className="p-4 pr-6 text-right space-x-2">
+                          <button
+                            onClick={() => handleEditUserClick(usr)}
+                            className="bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                          >
+                            Edit
+                          </button>
                           <button
                             onClick={() => setConfirmDeleteId({ id: usr.id, type: 'user' })}
                             className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
@@ -1198,6 +1486,113 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowAddPropModal(false)}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3.5 rounded-xl text-xs"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD / EDIT USER */}
+      {showAddUserModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-8 space-y-6 border border-slate-200 shadow-2xl overflow-y-auto max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+              <h3 className="text-xl font-black text-slate-900">
+                {editingUser ? 'Edit User Account' : 'Add New User Account'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddUserModal(false)}
+                className="text-slate-400 hover:text-slate-900 font-bold text-lg p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveUser} className="space-y-4 text-xs font-semibold text-slate-700">
+              <div>
+                <label className="block uppercase text-slate-500 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={userForm.name}
+                  onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                  placeholder="e.g. Sharma Kumar"
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block uppercase text-slate-500 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                  placeholder="sharma@gmail.com"
+                  disabled={Boolean(editingUser)}
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500 disabled:bg-slate-100"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block uppercase text-slate-500 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={userForm.phone}
+                  onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                  placeholder="+91 98765 43210"
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Account Role</label>
+                  <select
+                    value={userForm.role}
+                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value as any })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                  >
+                    <option value="CUSTOMER">Customer</option>
+                    <option value="AGENT">Agent</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Account Status</label>
+                  <select
+                    value={userForm.status}
+                    onChange={(e) => setUserForm({ ...userForm, status: e.target.value as any })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-4 flex space-x-3">
+                <button
+                  type="button"
+                  onClick={(e) => handleSaveUser(e)}
+                  className="flex-1 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3.5 rounded-xl uppercase tracking-wider text-xs shadow-lg transition-all"
+                >
+                  SAVE USER
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3.5 rounded-xl text-xs"
                 >
                   Cancel

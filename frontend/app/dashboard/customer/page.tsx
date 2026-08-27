@@ -12,21 +12,36 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('user_token');
+      const role = localStorage.getItem('user_role')?.toLowerCase();
       const email = localStorage.getItem('user_email');
       const name = localStorage.getItem('user_name');
+
+      if (!token) {
+        router.push('/auth/login');
+        return;
+      }
+
+      if (role === 'admin') {
+        router.push('/dashboard/admin');
+        return;
+      } else if (role === 'agent') {
+        router.push('/dashboard/agent');
+        return;
+      }
+
       if (email) {
         setUserEmail(email);
         if (name) {
           setUserName(name);
         } else {
-          // Extract display name from email (e.g. balu@gmail.com -> Balu)
           let derived = email.split('@')[0];
           derived = derived.charAt(0).toUpperCase() + derived.slice(1);
           setUserName(derived);
         }
       }
     }
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {

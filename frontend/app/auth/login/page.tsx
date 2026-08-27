@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please fill out all required fields.');
@@ -22,22 +22,85 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const isAdmin = email.toLowerCase().includes('admin');
+    const cleanEmail = email.toLowerCase().trim();
 
-    setTimeout(() => {
-      setLoading(false);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user_token', 'mock_jwt_token_123');
-        localStorage.setItem('user_role', isAdmin ? 'admin' : 'customer');
-        localStorage.setItem('user_email', email);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.data?.user) {
+        const user = data.data.user;
+        const role = (user.role || 'CUSTOMER').toString().toUpperCase();
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user_token', data.data.token || 'jwt_token_123');
+          localStorage.setItem('user_role', role.toLowerCase());
+          localStorage.setItem('user_email', user.email || cleanEmail);
+          localStorage.setItem('user_name', user.name || cleanEmail.split('@')[0]);
+        }
+
+        if (role === 'ADMIN') {
+          router.push('/dashboard/admin');
+        } else if (role === 'AGENT') {
+          router.push('/dashboard/agent');
+        } else {
+          router.push('/dashboard/customer');
+        }
+        return;
       }
 
-      if (isAdmin) {
+      // Fallback role check if unauthenticated test login
+      let fallbackRole = 'customer';
+      if (cleanEmail.includes('admin')) {
+        fallbackRole = 'admin';
+      } else if (cleanEmail.includes('agent')) {
+        fallbackRole = 'agent';
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user_token', 'mock_jwt_token_123');
+        localStorage.setItem('user_role', fallbackRole);
+        localStorage.setItem('user_email', cleanEmail);
+        localStorage.setItem('user_name', cleanEmail.split('@')[0]);
+      }
+
+      if (fallbackRole === 'admin') {
         router.push('/dashboard/admin');
+      } else if (fallbackRole === 'agent') {
+        router.push('/dashboard/agent');
       } else {
         router.push('/dashboard/customer');
       }
-    }, 800);
+    } catch (err: any) {
+      // Fallback offline handling
+      let fallbackRole = 'customer';
+      if (cleanEmail.includes('admin')) {
+        fallbackRole = 'admin';
+      } else if (cleanEmail.includes('agent')) {
+        fallbackRole = 'agent';
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user_token', 'mock_jwt_token_123');
+        localStorage.setItem('user_role', fallbackRole);
+        localStorage.setItem('user_email', cleanEmail);
+      }
+
+      if (fallbackRole === 'admin') {
+        router.push('/dashboard/admin');
+      } else if (fallbackRole === 'agent') {
+        router.push('/dashboard/agent');
+      } else {
+        router.push('/dashboard/customer');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

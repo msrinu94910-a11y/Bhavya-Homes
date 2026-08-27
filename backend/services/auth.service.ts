@@ -1,20 +1,81 @@
-import { User, IUser, UserRole } from '../models/User.js';
+import { User, IUser, UserRole, UserStatus } from '../models/User.js';
+import { ActivityLog } from '../models/ActivityLog.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 import { generateToken } from '../utils/jwt.js';
 
 export class AuthService {
   static async registerCustomer(userData: Partial<IUser>) {
-    const existing = await User.findOne({ email: userData.email?.toLowerCase() });
+    const cleanEmail = userData.email?.toLowerCase().trim();
+    const existing = await User.findOne({ email: cleanEmail, isDeleted: { $ne: true } });
     if (existing) {
-      throw new Error('Email already registered');
+      throw new Error('An account with this email address is already registered');
     }
 
     const hashedPassword = await hashPassword(userData.password!);
+    const targetRole = userData.role === UserRole.AGENT ? UserRole.AGENT : UserRole.CUSTOMER;
+
+    if (targetRole === UserRole.AGENT) {
+      const count = await User.countDocuments({ role: UserRole.AGENT });
+      const agentCode = `BH-AGT-${101 + count}`;
+      const userId = `AGT-${Date.now().toString().slice(-6)}`;
+
+      const user = await User.create({
+        ...userData,
+        userId,
+        agentCode,
+        email: cleanEmail,
+        phone: userData.phone?.trim() || '+91 98765 00000',
+        password: hashedPassword,
+        role: UserRole.AGENT,
+        status: UserStatus.ACTIVE,
+        isActive: true,
+        totalLeads: 0,
+        totalCustomers: 0,
+      });
+
+      await ActivityLog.create({
+        user: user._id,
+        userName: user.name,
+        userRole: 'AGENT',
+        action: 'AGENT_REGISTERED',
+        description: `New agent registered: ${user.name} (${user.agentCode})`,
+        metadata: { agentCode: user.agentCode, email: user.email },
+      });
+
+      const token = generateToken({ id: user._id.toString(), role: user.role, email: user.email });
+      return { user: this.sanitizeUser(user), token };
+    }
+
+    // Customer Registration
+    const userId = `USR-${Date.now().toString().slice(-6)}`;
+    const defaultAgent = await User.findOne({ role: UserRole.AGENT, status: UserStatus.ACTIVE, isDeleted: { $ne: true } });
+
     const user = await User.create({
       ...userData,
-      email: userData.email?.toLowerCase(),
+      userId,
+      email: cleanEmail,
+      phone: userData.phone?.trim() || '+91 98765 00000',
       password: hashedPassword,
       role: UserRole.CUSTOMER,
+      status: UserStatus.ACTIVE,
+      isActive: true,
+      assignedAgent: defaultAgent ? defaultAgent._id : undefined,
+      assignedAgentCode: defaultAgent ? (defaultAgent.agentCode || 'BH-AGT-101') : '',
+      assignedAgentName: defaultAgent ? defaultAgent.name : '',
+    });
+
+    if (defaultAgent) {
+      defaultAgent.totalCustomers = (defaultAgent.totalCustomers || 0) + 1;
+      await defaultAgent.save();
+    }
+
+    await ActivityLog.create({
+      user: user._id,
+      userName: user.name,
+      userRole: 'CUSTOMER',
+      action: 'CUSTOMER_REGISTERED',
+      description: `New customer registered: ${user.name} (${user.email})`,
+      metadata: { userId: user.userId, email: user.email },
     });
 
     const token = generateToken({ id: user._id.toString(), role: user.role, email: user.email });
@@ -22,7 +83,8 @@ export class AuthService {
   }
 
   static async login(email: string, pass: string) {
-    const user = await User.findOne({ email: email.toLowerCase(), isDeleted: false }).select('+password');
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail, isDeleted: { $ne: true } }).select('+password');
     if (!user) {
       throw new Error('Invalid email or password');
     }
@@ -32,8 +94,8 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    if (!user.isActive) {
-      throw new Error('Account is inactive. Please contact support.');
+    if (!user.isActive || user.status === UserStatus.BLOCKED) {
+      throw new Error('Account is inactive or blocked. Please contact support.');
     }
 
     user.lastLoginAt = new Date();
