@@ -140,8 +140,35 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchMongoInquiries = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/inquiries');
+      if (res.ok) {
+        const data = await res.json();
+        const rawInqs = data.data || data;
+        if (Array.isArray(rawInqs) && rawInqs.length > 0) {
+          const mongoInqs: Inquiry[] = rawInqs.map((i: any) => ({
+            id: i._id || i.id,
+            customerName: i.customerName || i.name || 'Customer',
+            email: i.email || 'customer@gmail.com',
+            phone: i.phone || '+91 98765 00000',
+            property: i.property || 'Bhavya Homes Venture',
+            message: i.message || 'Interested in booking site visit',
+            status: i.status || 'NEW',
+            createdDate: i.createdAt ? new Date(i.createdAt).toLocaleDateString('en-IN') : '26 Aug 2026',
+            adminNotes: i.adminNotes,
+          }));
+          setInquiries(mongoInqs);
+        }
+      }
+    } catch (err) {
+      console.log('MongoDB API unreachable for inquiries.');
+    }
+  };
+
   useEffect(() => {
     fetchMongoProperties();
+    fetchMongoInquiries();
   }, []);
 
   const handleLogout = () => {

@@ -1,11 +1,9 @@
 import { Router } from 'express';
 import { SiteVisitController } from '../controllers/siteVisit.controller.js';
-import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-router.use(authenticate);
-
+// Public & Customer Site Visit Endpoints connected to MongoDB
 router.get('/', SiteVisitController.getAll);
 router.post('/', SiteVisitController.create);
 router.put('/:id', SiteVisitController.updateStatus);

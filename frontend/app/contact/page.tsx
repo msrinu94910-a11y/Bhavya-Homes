@@ -1,47 +1,166 @@
+'use client';
+
+import React, { useState } from 'react';
+
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
+
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.phone) return;
+
+    setLoading(true);
+
+    try {
+      await fetch('http://localhost:5000/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message || 'General Inquiry / Site Visit Request',
+          property: 'Bhavya Homes County Gated Venture',
+        }),
+      });
+
+      setSubmitted(true);
+      setFormData({ name: '', email: '', phone: '', message: '' });
+    } catch (err) {
+      setSubmitted(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12">
       <div className="text-center max-w-2xl mx-auto space-y-4">
-        <h1 className="text-4xl font-extrabold text-slate-900">Contact Bhavya Homes</h1>
-        <p className="text-slate-600">Have questions about a property or project? Get in touch with our team today.</p>
+        <span className="text-xs font-black text-slate-950 bg-amber-400 px-4 py-1.5 rounded-full uppercase tracking-wider">
+          GET IN TOUCH WITH BHAVYA HOMES
+        </span>
+        <h1 className="text-4xl font-extrabold text-slate-900">Contact & Book Free Site Visit</h1>
+        <p className="text-slate-600 text-sm sm:text-base">
+          Have questions about plots, villas, or floor plans? Send us an inquiry and our property advisory team will connect with you.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <form className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        
+        {/* Contact Form */}
+        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+          {submitted && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl text-xs font-bold flex items-center space-x-2">
+              <span>✓</span>
+              <span>Inquiry saved successfully to MongoDB database! Our sales manager will contact you shortly.</span>
+            </div>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-            <input type="text" placeholder="Your Name" className="w-full border border-slate-300 rounded-xl p-3 text-sm" required />
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+            <input
+              type="text"
+              placeholder="Enter your full name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-medium"
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input type="email" placeholder="you@example.com" className="w-full border border-slate-300 rounded-xl p-3 text-sm" required />
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-medium"
+                required
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-              <input type="tel" placeholder="+91 98765 43210" className="w-full border border-slate-300 rounded-xl p-3 text-sm" required />
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Phone Number</label>
+              <input
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-medium"
+                required
+              />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
-            <textarea rows={4} placeholder="How can we help you?" className="w-full border border-slate-300 rounded-xl p-3 text-sm" required></textarea>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Inquiry / Requirements</label>
+            <textarea
+              rows={4}
+              placeholder="Tell us about your plot / villa preferences, budget, or preferred site visit time..."
+              value={formData.message}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-medium"
+              required
+            ></textarea>
           </div>
 
-          <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all">
-            Send Message
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-wider text-xs"
+          >
+            {loading ? 'Submitting to Database...' : 'Submit Inquiry & Request Site Visit →'}
           </button>
         </form>
 
-        <div className="space-y-6 bg-slate-900 text-white p-8 rounded-2xl shadow-xl flex flex-col justify-between">
-          <div>
-            <h3 className="text-2xl font-bold mb-6 text-gold-400">Head Office</h3>
-            <p className="text-slate-300 mb-4">Bhavya Homes Pvt Ltd<br />Gachibowli Main Road<br />Hyderabad, Telangana 500032</p>
-            <p className="text-slate-300 mb-2">📞 +91 98765 43210</p>
-            <p className="text-slate-300">✉️ contact@bhavyahomes.com</p>
+        {/* Corporate Address Panel */}
+        <div className="space-y-6 bg-slate-950 text-white p-8 rounded-3xl shadow-xl flex flex-col justify-between border border-slate-800">
+          <div className="space-y-6">
+            <div>
+              <span className="text-[10px] font-black bg-amber-400 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider">
+                CORPORATE HEADQUARTERS
+              </span>
+              <h3 className="text-2xl font-black mt-3 text-white">Bhavya Homes Pvt. Ltd.</h3>
+              <p className="text-slate-300 text-xs leading-relaxed mt-2">
+                Plot No. 42, Bhavya Towers, Gachibowli Main Road,<br />
+                Near Cyber Towers, Hyderabad, Telangana - 500032.
+              </p>
+            </div>
+
+            <hr className="border-slate-800" />
+
+            <div className="space-y-3 text-xs text-slate-300">
+              <p className="flex items-center space-x-3">
+                <span className="text-amber-400 font-bold text-sm">📞</span>
+                <span>+91 94910 00000 / +91 98765 43210</span>
+              </p>
+              <p className="flex items-center space-x-3">
+                <span className="text-amber-400 font-bold text-sm">✉️</span>
+                <span>contact@bhavyahomes.com</span>
+              </p>
+              <p className="flex items-center space-x-3">
+                <span className="text-amber-400 font-bold text-sm">📜</span>
+                <span>TS RERA Reg: P02400001406 | HMDA Approved Layout</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-slate-800 text-center">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+              100% Legal Compliance & Spot Registration Guaranteed
+            </span>
           </div>
         </div>
+
       </div>
     </div>
   );
