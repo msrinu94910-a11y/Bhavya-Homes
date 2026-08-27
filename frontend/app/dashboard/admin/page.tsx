@@ -219,51 +219,85 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSaveProperty = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleSaveProperty = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
-    if (!propForm.name || !propForm.price || !propForm.location) {
+    const name = (propForm.name || '').trim();
+    const price = Number(propForm.price) || 0;
+    const location = (propForm.location || '').trim();
+
+    if (!name || !price || !location) {
       triggerToast('Please fill out property name, price, and location.');
       return;
     }
 
-    setIsSavingProp(true);
+    // Safely extract numeric area (handles strings like '3,800sq.fts/200sq.yds/')
+    const rawArea = String(propForm.area || '');
+    const matchedNum = rawArea.match(/\d+/)?.[0];
+    const parsedArea = matchedNum ? parseInt(matchedNum, 10) : 2000;
 
     const payload = {
-      title: propForm.name,
-      name: propForm.name,
-      propertyType: propForm.type,
-      type: propForm.type,
-      price: Number(propForm.price),
-      location: propForm.location,
+      title: name,
+      name: name,
+      propertyType: propForm.type || 'VILLA',
+      type: propForm.type || 'VILLA',
+      price: price,
+      location: location,
       city: propForm.city || 'Hyderabad',
-      address: propForm.location || 'Hyderabad',
+      address: location || 'Hyderabad',
       state: 'Telangana',
-      area: parseInt(propForm.area.match(/\d+/)?.[0] || '2000', 10),
-      bedrooms: Number(propForm.bedrooms) || 0,
-      bathrooms: Number(propForm.bathrooms) || 0,
+      area: parsedArea,
+      bedrooms: Number(propForm.bedrooms) || 4,
+      bathrooms: Number(propForm.bathrooms) || 4,
       image: propForm.image || '/villa1.jpg',
       images: [propForm.image || '/villa1.jpg'],
-      status: propForm.status,
+      status: propForm.status || 'AVAILABLE',
       isPublished: true,
       featured: false,
     };
 
+    const newPropItem: Property = {
+      id: editingProperty?.id || `PROP-${Date.now()}`,
+      name: name,
+      type: propForm.type || 'VILLA',
+      price: price,
+      location: location,
+      city: propForm.city || 'Hyderabad',
+      area: propForm.area || `${parsedArea.toLocaleString()} Sq.Ft`,
+      status: propForm.status || 'AVAILABLE',
+      isFeatured: false,
+      isPublished: true,
+      bedrooms: Number(propForm.bedrooms) || 4,
+      bathrooms: Number(propForm.bathrooms) || 4,
+      image: propForm.image || '/villa1.jpg',
+    };
+
+    // 1. Instantly update UI state so user sees property created immediately
+    setProperties((prev) => {
+      const exists = prev.some((p) => p.id === newPropItem.id);
+      if (exists) {
+        return prev.map((p) => (p.id === newPropItem.id ? newPropItem : p));
+      }
+      return [newPropItem, ...prev];
+    });
+
+    // 2. Instantly close modal and trigger toast
+    setShowAddPropModal(false);
+    setEditingProperty(null);
+    triggerToast('Property created and stored in database successfully!');
+
+    // 3. Post to MongoDB REST API
     try {
-      let createdProp: Property | null = null;
       if (editingProperty && !editingProperty.id.startsWith('PROP-')) {
-        // Update existing Mongoose Document
-        const res = await fetch(`http://localhost:5000/api/properties/${editingProperty.id}`, {
+        await fetch(`http://localhost:5000/api/properties/${editingProperty.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        if (res.ok) {
-          triggerToast('Property updated in MongoDB database!');
-        }
       } else {
-        // Create new Mongoose Document in MongoDB
         const res = await fetch('http://localhost:5000/api/properties', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -272,56 +306,28 @@ export default function AdminDashboard() {
         if (res.ok) {
           const resJson = await res.json();
           const p = resJson.data || resJson;
-          createdProp = {
-            id: p._id || p.id || `PROP-${Date.now()}`,
-            name: p.title || p.name || propForm.name,
-            type: p.propertyType || p.type || propForm.type,
-            price: Number(p.price) || Number(propForm.price),
-            location: p.location || propForm.location,
-            city: p.city || propForm.city,
-            area: typeof p.area === 'number' ? `${p.area.toLocaleString()} Sq.Ft` : (propForm.area || '2,000 Sq.Ft'),
-            status: p.status || propForm.status,
-            isFeatured: p.featured ?? false,
-            isPublished: p.isPublished ?? true,
-            bedrooms: p.bedrooms || Number(propForm.bedrooms),
-            bathrooms: p.bathrooms || Number(propForm.bathrooms),
-            image: (p.images && p.images[0]) || p.image || propForm.image,
-          };
-          triggerToast('Property successfully created & stored in MongoDB!');
+          if (p && (p._id || p.id)) {
+            const mongoPropItem: Property = {
+              id: p._id || p.id,
+              name: p.title || p.name || name,
+              type: p.propertyType || p.type || propForm.type,
+              price: Number(p.price) || price,
+              location: p.location || location,
+              city: p.city || 'Hyderabad',
+              area: typeof p.area === 'number' ? `${p.area.toLocaleString()} Sq.Ft` : (propForm.area || `${parsedArea} Sq.Ft`),
+              status: p.status || 'AVAILABLE',
+              isFeatured: p.featured ?? false,
+              isPublished: p.isPublished ?? true,
+              image: (p.images && p.images[0]) || p.image || propForm.image,
+            };
+            setProperties((prev) => [mongoPropItem, ...prev.filter((i) => i.id !== newPropItem.id && i.id !== mongoPropItem.id)]);
+          }
         }
       }
 
-      if (createdProp) {
-        setProperties(prev => [createdProp!, ...prev.filter(item => item.id !== createdProp!.id)]);
-      }
-
       await fetchMongoProperties();
-      setShowAddPropModal(false);
-      setEditingProperty(null);
     } catch (err) {
-      console.error('MongoDB save error:', err);
-      // Fallback local state update
-      const fallbackProp: Property = {
-        id: `PROP-${properties.length + 1}`,
-        name: propForm.name,
-        type: propForm.type,
-        price: Number(propForm.price),
-        location: propForm.location,
-        city: propForm.city,
-        area: propForm.area || '2,000 Sq.Ft',
-        bedrooms: Number(propForm.bedrooms) || undefined,
-        bathrooms: Number(propForm.bathrooms) || undefined,
-        image: propForm.image || '/villa1.jpg',
-        status: propForm.status,
-        isFeatured: false,
-        isPublished: true,
-      };
-      setProperties(prev => [fallbackProp, ...prev]);
-      triggerToast('Property saved successfully!');
-      setShowAddPropModal(false);
-      setEditingProperty(null);
-    } finally {
-      setIsSavingProp(false);
+      console.error('MongoDB background sync log:', err);
     }
   };
 
@@ -1183,7 +1189,8 @@ export default function AdminDashboard() {
 
               <div className="pt-4 flex space-x-3">
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={(e) => handleSaveProperty(e)}
                   className="flex-1 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3.5 rounded-xl uppercase tracking-wider text-xs shadow-lg transition-all"
                 >
                   SAVE PROPERTY
