@@ -111,7 +111,7 @@ export default function AmenitiesPage() {
             <div className="p-6 pt-0">
               <Link
                 href="/contact"
-                className="w-full inline-block text-center bg-slate-950 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-sm"
+                className="w-full inline-block text-center bg-amber-400 hover:bg-amber-500 text-slate-950 font-black py-3.5 rounded-2xl text-xs transition-colors shadow-sm"
               >
                 Schedule Site Visit to Experience →
               </Link>
@@ -120,18 +120,18 @@ export default function AmenitiesPage() {
         ))}
       </section>
 
-      {/* Complete Venture Infrastructure Features (Exact Reference Screenshot Icon Grid) */}
-      <section className="bg-slate-950 text-white py-16">
+      {/* Complete Venture Infrastructure Features */}
+      <section className="bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 text-slate-900 py-16 border-t border-b border-amber-300/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-black text-amber-400">
+            <h2 className="text-3xl font-black text-amber-900 uppercase tracking-wider">
               Complete Venture Infrastructure Features
             </h2>
-            <p className="text-xl font-extrabold text-white tracking-wide">
+            <p className="text-2xl font-black text-slate-950 tracking-wide">
               Experience the Art of Opulence in its True Sense
             </p>
-            <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto">
+            <p className="text-slate-600 text-xs sm:text-sm font-semibold max-w-xl mx-auto">
               Every plot and villa in Bhavya Homes County is backed by 100% legal compliance and master-planned execution.
             </p>
           </div>
@@ -140,20 +140,20 @@ export default function AmenitiesPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-y-10 gap-x-4 justify-center text-center">
             {circularAmenities.map((item, idx) => (
               <div key={idx} className="flex flex-col items-center space-y-3 group cursor-pointer">
-                <div className="relative w-20 h-20 rounded-full border-2 border-slate-700 bg-slate-900/90 flex items-center justify-center text-3xl shadow-xl group-hover:border-amber-400 group-hover:scale-110 group-hover:bg-amber-400/10 transition-all duration-300">
+                <div className="relative w-20 h-20 rounded-full border-2 border-amber-300 bg-white flex items-center justify-center text-3xl shadow-md group-hover:border-amber-500 group-hover:scale-110 group-hover:bg-amber-50 transition-all duration-300">
                   <span className="transform group-hover:scale-110 transition-transform">{item.icon}</span>
                 </div>
-                <p className="text-[10px] font-black uppercase text-slate-300 group-hover:text-amber-400 tracking-wider max-w-[120px] leading-tight transition-colors">
+                <p className="text-[10px] font-black uppercase text-slate-800 group-hover:text-amber-700 tracking-wider max-w-[120px] leading-tight transition-colors">
                   {item.title}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="text-center pt-8 border-t border-slate-900">
+          <div className="text-center pt-8 border-t border-amber-200/80">
             <Link
               href="/properties"
-              className="bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-wider shadow-lg inline-block transform hover:scale-105"
+              className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-wider shadow-md inline-block transform hover:scale-105"
             >
               Explore Available Plot & Villa Listings
             </Link>

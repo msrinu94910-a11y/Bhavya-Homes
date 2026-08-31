@@ -12,38 +12,10 @@ export class AuthService {
     }
 
     const hashedPassword = await hashPassword(userData.password!);
-    const targetRole = userData.role === UserRole.AGENT ? UserRole.AGENT : UserRole.CUSTOMER;
+    const isAgentRole = userData.role === UserRole.AGENT || String(userData.role) === 'AGENT';
 
-    if (targetRole === UserRole.AGENT) {
-      const count = await User.countDocuments({ role: UserRole.AGENT });
-      const agentCode = `BH-AGT-${101 + count}`;
-      const userId = `AGT-${Date.now().toString().slice(-6)}`;
-
-      const user = await User.create({
-        ...userData,
-        userId,
-        agentCode,
-        email: cleanEmail,
-        phone: userData.phone?.trim() || '+91 98765 00000',
-        password: hashedPassword,
-        role: UserRole.AGENT,
-        status: UserStatus.ACTIVE,
-        isActive: true,
-        totalLeads: 0,
-        totalCustomers: 0,
-      });
-
-      await ActivityLog.create({
-        user: user._id,
-        userName: user.name,
-        userRole: 'AGENT',
-        action: 'AGENT_REGISTERED',
-        description: `New agent registered: ${user.name} (${user.agentCode})`,
-        metadata: { agentCode: user.agentCode, email: user.email },
-      });
-
-      const token = generateToken({ id: user._id.toString(), role: user.role, email: user.email });
-      return { user: this.sanitizeUser(user), token };
+    if (isAgentRole) {
+      throw new Error('Agent accounts cannot be created via public registration. Only Administrators can register new Agents from the Admin Portal.');
     }
 
     // Customer Registration

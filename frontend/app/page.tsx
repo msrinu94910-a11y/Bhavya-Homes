@@ -6,10 +6,10 @@ export default function Home() {
     <div className="space-y-16">
       
       {/* 100% Uncropped Architectural Hero Banner */}
-      <section className="relative w-full bg-slate-950">
+      <section className="relative w-full bg-slate-100">
         
         {/* Aspect Ratio Container for 100% Full Uncropped Entrance Gate View */}
-        <div className="relative w-full aspect-[16/9] max-h-[80vh] min-h-[420px] bg-slate-950 overflow-hidden flex items-center justify-center">
+        <div className="relative w-full aspect-[16/9] max-h-[80vh] min-h-[420px] bg-slate-100 overflow-hidden flex items-center justify-center">
           <Image
             src="/hero-bg.jpg"
             alt="Bhavya Homes County Gated Community Entrance Arch"
@@ -31,16 +31,16 @@ export default function Home() {
         </div>
 
         {/* Horizontal Interactive Search Bar Below Hero Image */}
-        <div className="bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 border-t border-b border-slate-800/80 shadow-2xl">
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 py-8 px-4 sm:px-6 lg:px-8 border-t border-b border-amber-300/60 shadow-sm">
           <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Title & Tagline Bar */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-amber-200/80 pb-4">
               <div>
-                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                  BHAVYA <span className="bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 bg-clip-text text-transparent">HOMES COUNTY</span>
+                <h1 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight">
+                  BHAVYA <span className="text-amber-600">HOMES COUNTY</span>
                 </h1>
-                <p className="text-xs text-amber-400 font-bold tracking-widest uppercase mt-0.5">
+                <p className="text-xs text-amber-800 font-extrabold tracking-widest uppercase mt-0.5">
                   BUILDING A NEW FUTURE — 50-Acre Mega Venture & Gated Community Luxury Residences
                 </p>
               </div>
@@ -48,13 +48,13 @@ export default function Home() {
               <div className="flex items-center space-x-3">
                 <Link
                   href="/properties"
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-5 py-2.5 rounded-xl shadow-md transition-all uppercase tracking-wider"
+                  className="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-black px-5 py-2.5 rounded-xl shadow-sm transition-all uppercase tracking-wider"
                 >
                   Browse All Properties
                 </Link>
                 <Link
                   href="/contact"
-                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl border border-slate-700 transition-all uppercase tracking-wider"
+                  className="bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold px-5 py-2.5 rounded-xl border border-slate-300 transition-all uppercase tracking-wider shadow-sm"
                 >
                   Book Site Visit
                 </Link>
@@ -62,12 +62,12 @@ export default function Home() {
             </div>
 
             {/* Interactive Search Box */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-bold text-white">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs font-bold text-slate-900">
               <div>
-                <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
+                <label className="block text-amber-900 uppercase tracking-wider mb-1 text-[10px]">
                   Location Corridor
                 </label>
-                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                <select className="w-full bg-white border border-slate-300 text-slate-900 font-semibold rounded-xl px-3 py-3 outline-none focus:border-amber-500 shadow-sm">
                   <option>Hyderabad (All Corridors)</option>
                   <option>Gachibowli Growth Corridor</option>
                   <option>Shadnagar / Pharma City</option>
@@ -76,10 +76,10 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
+                <label className="block text-amber-900 uppercase tracking-wider mb-1 text-[10px]">
                   Property Category
                 </label>
-                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                <select className="w-full bg-white border border-slate-300 text-slate-900 font-semibold rounded-xl px-3 py-3 outline-none focus:border-amber-500 shadow-sm">
                   <option>Open Plots (Gated Layout)</option>
                   <option>Luxury Villa</option>
                   <option>High-Rise Apartment</option>
@@ -87,10 +87,10 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-amber-400 uppercase tracking-wider mb-1 text-[10px]">
+                <label className="block text-amber-900 uppercase tracking-wider mb-1 text-[10px]">
                   Price Budget
                 </label>
-                <select className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-3 py-3 outline-none focus:border-amber-500 font-medium">
+                <select className="w-full bg-white border border-slate-300 text-slate-900 font-semibold rounded-xl px-3 py-3 outline-none focus:border-amber-500 shadow-sm">
                   <option>Any Budget</option>
                   <option>₹25 Lakhs - ₹50 Lakhs</option>
                   <option>₹50 Lakhs - ₹1 Crore</option>
@@ -99,24 +99,24 @@ export default function Home() {
               </div>
 
               <div className="flex items-end">
-                <button className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all uppercase tracking-wider text-xs">
+                <button className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md transition-all uppercase tracking-wider text-xs">
                   Search Venture & Availability
                 </button>
               </div>
             </div>
 
             {/* Key Assurance Perks */}
-            <div className="flex flex-wrap items-center space-x-6 text-xs font-bold text-slate-300 pt-2">
+            <div className="flex flex-wrap items-center space-x-6 text-xs font-extrabold text-slate-700 pt-2">
               <span className="flex items-center space-x-1.5">
-                <span className="text-emerald-400 font-bold">✓</span>
+                <span className="text-emerald-600 font-black">✓</span>
                 <span>100% Clear Title & Spot Registration</span>
               </span>
               <span className="flex items-center space-x-1.5">
-                <span className="text-emerald-400 font-bold">✓</span>
+                <span className="text-emerald-600 font-black">✓</span>
                 <span>Bank Loan Facility Available</span>
               </span>
               <span className="flex items-center space-x-1.5">
-                <span className="text-emerald-400 font-bold">✓</span>
+                <span className="text-emerald-600 font-black">✓</span>
                 <span>24/7 Security & Gated Compound Wall</span>
               </span>
             </div>

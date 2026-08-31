@@ -29,6 +29,10 @@ export interface IUser extends Document {
   assignedAgent?: mongoose.Types.ObjectId;
   assignedAgentCode?: string;
   assignedAgentName?: string;
+  assignedAgentPhone?: string;
+  assignedAgentStatus?: string;
+  referredByAgent?: mongoose.Types.ObjectId;
+  leadSource?: string;
   isActive: boolean;
   isDeleted: boolean;
   deletedAt?: Date;
@@ -55,6 +59,10 @@ const UserSchema: Schema = new Schema(
     assignedAgent: { type: Schema.Types.ObjectId, ref: 'User' },
     assignedAgentCode: { type: String, trim: true, default: '' },
     assignedAgentName: { type: String, trim: true, default: '' },
+    assignedAgentPhone: { type: String, trim: true, default: '' },
+    assignedAgentStatus: { type: String, trim: true, default: 'ACTIVE' },
+    referredByAgent: { type: Schema.Types.ObjectId, ref: 'User' },
+    leadSource: { type: String, default: 'AGENT_REFERENCE' },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date },

@@ -28,6 +28,12 @@ export interface IInquiry extends Document {
   source: InquirySource;
   status: InquiryStatus;
   assignedTo?: mongoose.Types.ObjectId;
+  // Agent Reference Tracking Fields
+  referredByAgent?: mongoose.Types.ObjectId;
+  agentCode?: string;
+  agentName?: string;
+  agentPhone?: string;
+  agentStatus?: string;
   adminNotes?: string;
   isDeleted: boolean;
   deletedAt?: Date;
@@ -47,6 +53,12 @@ const InquirySchema: Schema = new Schema(
     source: { type: String, enum: Object.values(InquirySource), default: InquirySource.WEBSITE, required: true },
     status: { type: String, enum: Object.values(InquiryStatus), default: InquiryStatus.NEW, required: true },
     assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
+    // Agent Reference Tracking Fields
+    referredByAgent: { type: Schema.Types.ObjectId, ref: 'User' },
+    agentCode: { type: String, trim: true, default: '' },
+    agentName: { type: String, trim: true, default: '' },
+    agentPhone: { type: String, trim: true, default: '' },
+    agentStatus: { type: String, trim: true, default: 'ACTIVE' },
     adminNotes: { type: String, default: '' },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date },

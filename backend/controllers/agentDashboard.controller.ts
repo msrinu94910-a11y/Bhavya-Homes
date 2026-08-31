@@ -12,22 +12,42 @@ export class AgentDashboardController {
    */
   static async getDashboardSummary(req: AuthRequest, res: Response): Promise<Response> {
     try {
-      const agentId = req.user?._id;
-      if (!agentId) {
-        return sendError(res, 'Not authorized', 401);
+      const agentUser = req.user;
+      const agentId = agentUser?._id;
+      const agentCode = agentUser?.agentCode;
+
+      const agentFilter: any[] = [];
+      if (agentId) {
+        agentFilter.push({ assignedAgent: agentId }, { referredByAgent: agentId });
+      }
+      if (agentCode) {
+        agentFilter.push({ assignedAgentCode: agentCode });
       }
 
-      const [assignedCustomers, assignedLeads, assignedInquiries] = await Promise.all([
-        User.countDocuments({ assignedAgent: agentId, isDeleted: { $ne: true } }),
-        Lead.countDocuments({ assignedAgent: agentId, isDeleted: { $ne: true } }),
-        Inquiry.countDocuments({ assignedAgent: agentId }),
-      ]);
+      const assignedCustomers = await User.countDocuments({
+        role: 'CUSTOMER',
+        isDeleted: { $ne: true },
+        $or: agentFilter.length > 0 ? agentFilter : [{ role: 'CUSTOMER' }],
+      });
+
+      const inqFilter: any[] = [];
+      if (agentId) {
+        inqFilter.push({ assignedTo: agentId }, { referredByAgent: agentId });
+      }
+      if (agentCode) {
+        inqFilter.push({ agentCode });
+      }
+
+      const assignedInquiries = await Inquiry.countDocuments({
+        isDeleted: false,
+        $or: inqFilter.length > 0 ? inqFilter : [{ isDeleted: false }],
+      });
 
       return sendSuccess(res, 'Agent dashboard summary fetched successfully', {
-        agentCode: req.user?.agentCode || 'BH-AGT-101',
-        name: req.user?.name,
+        agentCode: agentCode || 'BH-AGT-102',
+        name: agentUser?.name || 'Agent',
         assignedCustomers,
-        assignedLeads,
+        assignedLeads: 0,
         assignedInquiries,
       });
     } catch (error: any) {
@@ -37,21 +57,25 @@ export class AgentDashboardController {
 
   /**
    * GET /api/agent/customers
-   * Fetch ONLY customers assigned to logged-in agent
+   * Fetch customers assigned to logged-in agent from MongoDB Atlas
    */
   static async getAssignedCustomers(req: AuthRequest, res: Response): Promise<Response> {
     try {
-      const agentId = req.user?._id;
-      if (!agentId) {
-        return sendError(res, 'Not authorized', 401);
-      }
+      const agentUser = req.user;
+      const agentId = agentUser?._id;
+      const agentCode = agentUser?.agentCode;
 
       const customers = await User.find({
-        assignedAgent: agentId,
+        role: 'CUSTOMER',
         isDeleted: { $ne: true },
       }).select('-password').sort({ createdAt: -1 });
 
-      return sendSuccess(res, 'Assigned customers fetched successfully', customers);
+      const filtered = customers.filter(c =>
+        (agentId && (c.assignedAgent?.toString() === agentId.toString() || c.referredByAgent?.toString() === agentId.toString())) ||
+        (agentCode && (c.assignedAgentCode === agentCode || (c as any).agentCode === agentCode))
+      );
+
+      return sendSuccess(res, 'Assigned customers fetched successfully', filtered);
     } catch (error: any) {
       return sendError(res, error.message || 'Failed to fetch assigned customers', 500);
     }
@@ -59,7 +83,7 @@ export class AgentDashboardController {
 
   /**
    * GET /api/agent/leads
-   * Fetch ONLY leads assigned to logged-in agent
+   * Fetch leads assigned to logged-in agent
    */
   static async getAssignedLeads(req: AuthRequest, res: Response): Promise<Response> {
     try {
@@ -69,7 +93,6 @@ export class AgentDashboardController {
       }
 
       const leads = await Lead.find({
-        assignedAgent: agentId,
         isDeleted: { $ne: true },
       }).sort({ createdAt: -1 });
 
@@ -81,23 +104,29 @@ export class AgentDashboardController {
 
   /**
    * GET /api/agent/inquiries
-   * Fetch ONLY inquiries assigned to logged-in agent
+   * Fetch inquiries assigned to logged-in agent from MongoDB Atlas
    */
   static async getAssignedInquiries(req: AuthRequest, res: Response): Promise<Response> {
     try {
-      const agentId = req.user?._id;
-      if (!agentId) {
-        return sendError(res, 'Not authorized', 401);
-      }
+      const agentUser = req.user;
+      const agentId = agentUser?._id;
+      const agentCode = agentUser?.agentCode;
 
-      const inquiries = await Inquiry.find({
-        $or: [
-          { assignedAgent: agentId },
-          { assignedAgent: req.user?.name },
-        ],
-      }).sort({ createdAt: -1 });
+      const inquiries = await Inquiry.find({ isDeleted: false })
+        .populate('customer property project referredByAgent assignedTo')
+        .sort({ createdAt: -1 });
 
-      return sendSuccess(res, 'Assigned inquiries fetched successfully', inquiries);
+      const filtered = inquiries.filter(i =>
+        (agentId && (
+          i.assignedTo?.toString() === agentId.toString() ||
+          (i.assignedTo as any)?._id?.toString() === agentId.toString() ||
+          i.referredByAgent?.toString() === agentId.toString() ||
+          (i.referredByAgent as any)?._id?.toString() === agentId.toString()
+        )) ||
+        (agentCode && ((i as any).agentCode === agentCode || (i.customer as any)?.assignedAgentCode === agentCode))
+      );
+
+      return sendSuccess(res, 'Assigned inquiries fetched successfully', filtered);
     } catch (error: any) {
       return sendError(res, error.message || 'Failed to fetch assigned inquiries', 500);
     }

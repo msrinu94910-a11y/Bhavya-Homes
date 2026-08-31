@@ -55,10 +55,17 @@ export default function LoginPage() {
       }
 
       // Fallback role check if unauthenticated test login
+      const isAgentEmail = cleanEmail.includes('agent') ||
+        cleanEmail === 'rajesh@bhavyahomes.com' ||
+        cleanEmail === 'jana@gmail.com' ||
+        cleanEmail === 'srenivasulu@bhavyahomes.com' ||
+        cleanEmail === 'priya@bhavyahomes.com' ||
+        cleanEmail === 'ananya@bhavyahomes.com';
+
       let fallbackRole = 'customer';
       if (cleanEmail.includes('admin')) {
         fallbackRole = 'admin';
-      } else if (cleanEmail.includes('agent')) {
+      } else if (isAgentEmail) {
         fallbackRole = 'agent';
       }
 
@@ -78,10 +85,17 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       // Fallback offline handling
+      const isAgentEmail = cleanEmail.includes('agent') ||
+        cleanEmail === 'rajesh@bhavyahomes.com' ||
+        cleanEmail === 'jana@gmail.com' ||
+        cleanEmail === 'srenivasulu@bhavyahomes.com' ||
+        cleanEmail === 'priya@bhavyahomes.com' ||
+        cleanEmail === 'ananya@bhavyahomes.com';
+
       let fallbackRole = 'customer';
       if (cleanEmail.includes('admin')) {
         fallbackRole = 'admin';
-      } else if (cleanEmail.includes('agent')) {
+      } else if (isAgentEmail) {
         fallbackRole = 'agent';
       }
 
@@ -104,10 +118,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-950">
+    <div className="relative min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-50">
       
       {/* Background Architectural Overlay */}
-      <div className="absolute inset-0 z-0 opacity-25">
+      <div className="absolute inset-0 z-0 opacity-15">
         <Image
           src="/hero-bg.jpg"
           alt="Bhavya Homes Entrance"
@@ -115,16 +129,16 @@ export default function LoginPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/90 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-slate-50/90 to-slate-50" />
       </div>
 
-      {/* Main Glassmorphic Login Card */}
-      <div className="relative z-10 w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
+      {/* Main Glassmorphic Light Login Card */}
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl space-y-6">
         
         {/* Brand Logo & Header */}
         <div className="text-center space-y-3">
           <Link href="/" className="inline-flex items-center space-x-3 group">
-            <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-md border border-amber-500/40 bg-slate-950">
+            <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-md border border-amber-400 bg-amber-50">
               <Image
                 src="/logo.png"
                 alt="Bhavya Homes Logo"
@@ -133,21 +147,22 @@ export default function LoginPage() {
               />
             </div>
             <div className="text-left">
-              <span className="text-xl font-black bg-gradient-to-r from-white to-amber-400 bg-clip-text text-transparent block">
+              <span className="text-xl font-black text-slate-950 block tracking-wide">
                 BHAVYA HOMES
               </span>
-              <span className="text-[10px] text-amber-400 font-bold tracking-widest uppercase block -mt-1">
-                SIGN IN
+              <span className="text-[10px] text-amber-700 font-black tracking-widest uppercase block -mt-1">
+                SIGN IN PORTAL
               </span>
             </div>
           </Link>
 
-          <h1 className="text-2xl font-black text-white pt-2">Welcome Back</h1>
+          <h1 className="text-2xl font-black text-slate-950 pt-2">Welcome Back</h1>
+          <p className="text-xs text-slate-500 font-semibold">Sign in to access your properties & dashboard</p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold p-3 rounded-xl text-center">
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-semibold p-3 rounded-xl text-center">
             {error}
           </div>
         )}
@@ -157,7 +172,7 @@ export default function LoginPage() {
           
           {/* Email Input */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
               Email Address
             </label>
             <input
@@ -165,7 +180,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3.5 text-sm placeholder-slate-600 transition-all outline-none"
+              className="w-full bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-900 font-semibold rounded-2xl px-4 py-3.5 text-sm placeholder-slate-400 transition-all outline-none"
               required
             />
           </div>
@@ -173,12 +188,12 @@ export default function LoginPage() {
           {/* Password Input */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                 Password
               </label>
               <Link
                 href="/auth/forgot-password"
-                className="text-xs text-amber-400 hover:underline font-semibold"
+                className="text-xs text-amber-700 hover:underline font-bold"
               >
                 Forgot password?
               </Link>
@@ -189,13 +204,13 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3.5 text-sm placeholder-slate-600 transition-all outline-none pr-10"
+                className="w-full bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-900 font-semibold rounded-2xl px-4 py-3.5 text-sm placeholder-slate-400 transition-all outline-none pr-10"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-bold p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 text-xs font-bold p-1"
               >
                 {showPassword ? 'Hide' : 'Show'}
               </button>
@@ -206,16 +221,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-wider text-sm transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-black py-4 rounded-2xl shadow-md transition-all uppercase tracking-wider text-sm transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
         {/* Footer Link */}
-        <p className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800">
+        <p className="text-center text-xs text-slate-500 font-semibold pt-2 border-t border-slate-100">
           Don't have an account yet?{' '}
-          <Link href="/auth/register" className="text-amber-400 font-bold hover:underline">
+          <Link href="/auth/register" className="text-amber-700 font-extrabold hover:underline">
             Register New Account
           </Link>
         </p>

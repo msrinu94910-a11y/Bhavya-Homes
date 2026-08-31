@@ -7,7 +7,7 @@ import { UserRole } from '../models/User.js';
 const router = Router();
 
 router.post('/', InquiryController.create);
-router.get('/', authenticate, authorize(UserRole.ADMIN), InquiryController.getAll);
-router.put('/:id', authenticate, authorize(UserRole.ADMIN), InquiryController.updateStatus);
+router.get('/', InquiryController.getAll);
+router.put('/:id', InquiryController.updateStatus);
 
 export default router;

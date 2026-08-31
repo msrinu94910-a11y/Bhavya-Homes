@@ -49,12 +49,20 @@ export class AuthController {
       if (existing) {
         return sendError(res, 'User with this email already exists', 400);
       }
+
+      let agentCode = undefined;
+      if (role === 'AGENT') {
+        const count = await User.countDocuments({ role: 'AGENT' });
+        agentCode = req.body.agentCode || `BH-AGT-${101 + count}`;
+      }
+
       const newUser = await User.create({
         name,
         email: email.toLowerCase().trim(),
         phone: phone || '+91 98765 00000',
         password: password || '$2a$10$e842d731467cb74109c8d',
         role: role || 'CUSTOMER',
+        agentCode,
         isActive: status !== 'INACTIVE',
       });
       return sendSuccess(res, 'User account created successfully in database', newUser, 201);

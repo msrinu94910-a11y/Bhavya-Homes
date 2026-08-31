@@ -47,7 +47,11 @@ export default function PropertiesPage() {
 
   const filteredProperties = selectedType === 'ALL'
     ? properties
-    : properties.filter(p => p.type === selectedType);
+    : properties.filter(p => {
+        const cleanP = (p.type || '').toUpperCase().replace(/[\s_]+/g, '');
+        const cleanF = (selectedType || '').toUpperCase().replace(/[\s_]+/g, '');
+        return cleanP === cleanF || (cleanF.includes('PLOT') && cleanP.includes('PLOT'));
+      });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">

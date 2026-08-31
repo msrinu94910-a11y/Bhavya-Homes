@@ -38,6 +38,7 @@ export class AdminCustomerController {
       const [customers, total] = await Promise.all([
         User.find(query)
           .select('-password')
+          .populate('assignedAgent referredByAgent')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limit)
@@ -88,7 +89,7 @@ export class AdminCustomerController {
         _id: req.params.id,
         role: UserRole.CUSTOMER,
         isDeleted: { $ne: true },
-      }).select('-password');
+      }).select('-password').populate('assignedAgent referredByAgent');
 
       if (!customer) {
         return sendError(res, 'Customer not found', 404);
@@ -106,7 +107,7 @@ export class AdminCustomerController {
    */
   static async createCustomer(req: Request, res: Response): Promise<Response> {
     try {
-      const { name, email, phone, password, status } = req.body;
+      const { name, email, phone, password, status, agentId } = req.body;
 
       if (!name || !email || !phone) {
         return sendError(res, 'Name, email, and phone are required fields', 400);
@@ -117,6 +118,9 @@ export class AdminCustomerController {
       if (existing) {
         return sendError(res, 'A customer with this email address already exists', 400);
       }
+
+      // Lookup referring agent details if agentId provided or fallback to default agent
+      let agentUser = agentId ? await User.findById(agentId) : await User.findOne({ role: 'AGENT' });
 
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password || 'Customer@123', salt);
@@ -129,9 +133,16 @@ export class AdminCustomerController {
         role: UserRole.CUSTOMER,
         status: status || UserStatus.ACTIVE,
         isActive: status !== UserStatus.INACTIVE && status !== UserStatus.BLOCKED,
+        assignedAgent: agentUser ? agentUser._id : undefined,
+        assignedAgentCode: agentUser ? (agentUser.agentCode || 'BH-AGT-102') : 'BH-AGT-102',
+        assignedAgentName: agentUser ? agentUser.name : 'Agent Janardhan Reddy',
+        assignedAgentPhone: agentUser ? agentUser.phone : '+91 98765 99999',
+        assignedAgentStatus: agentUser ? (agentUser.status || 'ACTIVE') : 'ACTIVE',
+        referredByAgent: agentUser ? agentUser._id : undefined,
+        leadSource: 'AGENT_REFERENCE',
       });
 
-      const sanitized = await User.findById(customer._id).select('-password');
+      const sanitized = await User.findById(customer._id).select('-password').populate('assignedAgent referredByAgent');
       return sendSuccess(res, 'Customer registered successfully', sanitized, 201);
     } catch (error: any) {
       return sendError(res, error.message || 'Failed to create customer', 400);

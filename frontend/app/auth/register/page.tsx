@@ -65,10 +65,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-950">
+    <div className="relative min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-50">
       
       {/* Background Architectural Overlay */}
-      <div className="absolute inset-0 z-0 opacity-25">
+      <div className="absolute inset-0 z-0 opacity-15">
         <Image
           src="/hero-bg.jpg"
           alt="Bhavya Homes Entrance"
@@ -76,16 +76,16 @@ export default function RegisterPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/90 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-slate-50/90 to-slate-50" />
       </div>
 
-      {/* Glassmorphic Register Card */}
-      <div className="relative z-10 w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
+      {/* Glassmorphic Light Register Card */}
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl p-8 shadow-2xl space-y-6">
         
         {/* Brand Header */}
         <div className="text-center space-y-3">
           <Link href="/" className="inline-flex items-center space-x-3 group">
-            <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-md border border-amber-500/40 bg-slate-950">
+            <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-md border border-amber-400 bg-amber-50">
               <Image
                 src="/logo.png"
                 alt="Bhavya Homes Logo"
@@ -94,21 +94,21 @@ export default function RegisterPage() {
               />
             </div>
             <div className="text-left">
-              <span className="text-xl font-black bg-gradient-to-r from-white to-amber-400 bg-clip-text text-transparent block">
+              <span className="text-xl font-black text-slate-950 block tracking-wide">
                 BHAVYA HOMES
               </span>
-              <span className="text-[10px] text-amber-400 font-bold tracking-widest uppercase block -mt-1">
+              <span className="text-[10px] text-amber-700 font-black tracking-widest uppercase block -mt-1">
                 CREATE ACCOUNT
               </span>
             </div>
           </Link>
 
-          <h1 className="text-2xl font-black text-white pt-2">Join Bhavya Homes</h1>
-          <p className="text-xs text-slate-400">Register as a Customer or Agent to access real estate services</p>
+          <h1 className="text-2xl font-black text-slate-950 pt-2">Join Bhavya Homes</h1>
+          <p className="text-xs text-slate-500 font-semibold">Create a customer account to save favorite properties & track site visits</p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold p-3 rounded-xl text-center">
+          <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-semibold p-3 rounded-xl text-center">
             {error}
           </div>
         )}
@@ -116,66 +116,53 @@ export default function RegisterPage() {
         {/* Form Container */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Account Type</label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white font-bold rounded-2xl px-4 py-3 text-sm outline-none"
-            >
-              <option value="CUSTOMER">Customer Account</option>
-              <option value="AGENT">Real Estate Agent Account</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Full Name</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Full Name</label>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
               placeholder="Srikanth Rao"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3 text-sm placeholder-slate-600 outline-none"
+              className="w-full bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-900 font-semibold rounded-2xl px-4 py-3.5 text-sm placeholder-slate-400 outline-none transition-all"
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Email Address</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Email Address</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="srikanth@example.com"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3 text-sm placeholder-slate-600 outline-none"
+              className="w-full bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-900 font-semibold rounded-2xl px-4 py-3.5 text-sm placeholder-slate-400 outline-none transition-all"
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Mobile Phone Number</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Mobile Phone Number</label>
             <input
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
               placeholder="+91 98765 43210"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3 text-sm placeholder-slate-600 outline-none"
+              className="w-full bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-900 font-semibold rounded-2xl px-4 py-3.5 text-sm placeholder-slate-400 outline-none transition-all"
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">Password</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">Password</label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               placeholder="••••••••"
-              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-white rounded-2xl px-4 py-3 text-sm placeholder-slate-600 outline-none"
+              className="w-full bg-slate-50 border border-slate-300 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-slate-900 font-semibold rounded-2xl px-4 py-3.5 text-sm placeholder-slate-400 outline-none transition-all"
               required
             />
           </div>
@@ -183,15 +170,15 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-wider text-sm transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            className="w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-black py-4 rounded-2xl shadow-md transition-all uppercase tracking-wider text-sm transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
           >
-            {loading ? 'Registering...' : `Create ${formData.role === 'AGENT' ? 'Agent' : 'Customer'} Account`}
+            {loading ? 'Registering...' : 'Create Customer Account'}
           </button>
         </form>
 
-        <p className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800">
+        <p className="text-center text-xs text-slate-500 font-semibold pt-2 border-t border-slate-100">
           Already registered?{' '}
-          <Link href="/auth/login" className="text-amber-400 font-bold hover:underline">
+          <Link href="/auth/login" className="text-amber-700 font-extrabold hover:underline">
             Sign In Here
           </Link>
         </p>

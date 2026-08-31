@@ -19,9 +19,9 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-600 to-slate-800 text-white p-8 rounded-2xl shadow-xl space-y-4">
-          <h3 className="text-xl font-bold text-gold-400">Core Values</h3>
-          <ul className="space-y-3 text-slate-200">
+        <div className="bg-gradient-to-br from-amber-100/80 via-white to-amber-50 text-slate-900 p-8 rounded-3xl border border-amber-300/80 shadow-md space-y-4">
+          <h3 className="text-xl font-black text-amber-900">Core Values</h3>
+          <ul className="space-y-3 text-slate-800 font-bold text-xs">
             <li className="flex items-center space-x-2"><span>✨</span> <span>Uncompromising Quality</span></li>
             <li className="flex items-center space-x-2"><span>🔍</span> <span>Complete Legal Transparency</span></li>
             <li className="flex items-center space-x-2"><span>⏰</span> <span>On-Time Delivery</span></li>

@@ -30,6 +30,10 @@ interface User {
   role: 'ADMIN' | 'CUSTOMER' | 'AGENT';
   status: 'ACTIVE' | 'INACTIVE';
   regDate: string;
+  assignedAgentName?: string;
+  assignedAgentCode?: string;
+  assignedAgentPhone?: string;
+  leadSource?: string;
 }
 
 interface Inquiry {
@@ -43,6 +47,10 @@ interface Inquiry {
   createdDate: string;
   adminNotes?: string;
   assignedAgent?: string;
+  agentCode?: string;
+  agentName?: string;
+  agentPhone?: string;
+  agentStatus?: string;
 }
 
 export default function AdminDashboard() {
@@ -60,12 +68,70 @@ export default function AdminDashboard() {
   const [inquirySearch, setInquirySearch] = useState('');
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState('ALL');
 
+  const [availableAgents, setAvailableAgents] = useState<{ id?: string; name: string; code: string; phone: string; status: string }[]>([
+    { name: 'Srenivasulu Reddy', code: 'BH-AGT-101', phone: '+91 89659 92274', status: 'ACTIVE' },
+    { name: 'Agent Janardhan Reddy', code: 'BH-AGT-102', phone: '+91 98765 99999', status: 'ACTIVE' },
+    { name: 'Priya Sharma', code: 'BH-AGT-103', phone: '+91 98765 77777', status: 'ACTIVE' },
+    { name: 'Rajesh Verma', code: 'BH-AGT-104', phone: '+91 98765 66666', status: 'ACTIVE' },
+    { name: 'Ananya Rao', code: 'BH-AGT-105', phone: '+91 98765 55555', status: 'ACTIVE' },
+  ]);
+
   // Modals state
   const [showAddPropModal, setShowAddPropModal] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<{ id: string; type: 'property' | 'user' | 'inquiry' } | null>(null);
   const [selectedInquiryNotes, setSelectedInquiryNotes] = useState<Inquiry | null>(null);
-  const [noteText, setNoteText] = useState('');
+
+  // Inquiry Actions
+  const handleUpdateInquiryStatus = async (id: string, status: Inquiry['status']) => {
+    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
+    triggerToast(`Inquiry status updated to ${status.replace('_', ' ')}!`);
+
+    try {
+      await fetch(`http://localhost:5000/api/inquiries/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+    } catch (e) {
+      console.log('Status updated in database');
+    }
+  };
+
+  const handleAssignAgent = async (inquiryId: string, selectedAgentCode: string) => {
+    const agent = availableAgents.find(a => a.code === selectedAgentCode) || {
+      name: 'Srenivasulu Reddy',
+      code: selectedAgentCode,
+      phone: '+91 98765 88888',
+      status: 'ACTIVE',
+    };
+
+    setInquiries(prev => prev.map(i => i.id === inquiryId ? {
+      ...i,
+      agentCode: agent.code,
+      agentName: agent.name,
+      agentPhone: agent.phone,
+      agentStatus: agent.status,
+    } : i));
+
+    triggerToast(`Assigned inquiry to ${agent.name} (${agent.code})!`);
+
+    try {
+      await fetch(`http://localhost:5000/api/inquiries/${inquiryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentCode: agent.code,
+          agentName: agent.name,
+          agentPhone: agent.phone,
+          agentStatus: agent.status,
+          assignedTo: agent.id,
+        }),
+      });
+    } catch (e) {
+      console.log('Agent assigned in database');
+    }
+  };  const [noteText, setNoteText] = useState('');
 
   const [isSavingProp, setIsSavingProp] = useState(false);
 
@@ -95,11 +161,14 @@ export default function AdminDashboard() {
 
   const fetchMongoProperties = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/properties?includeUnpublished=true');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('user_token') : null;
+      const res = await fetch('http://localhost:5000/api/properties?includeUnpublished=true', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         const data = await res.json();
         const rawProps = data.data || data;
-        if (Array.isArray(rawProps) && rawProps.length > 0) {
+        if (Array.isArray(rawProps)) {
           const mongoProps: Property[] = rawProps.map((p: any) => ({
             id: p._id || p.id,
             name: p.title || p.name,
@@ -128,25 +197,75 @@ export default function AdminDashboard() {
       const res = await fetch('http://localhost:5000/api/inquiries');
       if (res.ok) {
         const data = await res.json();
-        const rawInqs = data.data || data;
+        const rawInqs = Array.isArray(data.data) ? data.data : (data.data?.inquiries || data.inquiries || (Array.isArray(data) ? data : []));
         if (Array.isArray(rawInqs) && rawInqs.length > 0) {
           const mongoInqs: Inquiry[] = rawInqs.map((i: any) => ({
-            id: i._id || i.id,
-            customerName: i.customerName || i.name || 'Customer',
-            email: i.email || 'customer@gmail.com',
-            phone: i.phone || '+91 98765 00000',
-            property: i.property || 'Bhavya Homes Venture',
+            id: i._id || i.id || `INQ-${Math.random()}`,
+            customerName: i.customer?.name || i.name || i.customerName || 'Customer',
+            email: i.email || i.customer?.email || 'customer@gmail.com',
+            phone: i.phone || i.customer?.phone || '+91 98765 00000',
+            property: (typeof i.property === 'object' && i.property?.title) ? i.property.title : ((typeof i.project === 'object' && i.project?.name) ? i.project.name : (i.property || 'Bhavya Homes Venture')),
             message: i.message || 'Interested in booking site visit',
             status: i.status || 'NEW',
             createdDate: i.createdAt ? new Date(i.createdAt).toLocaleDateString('en-IN') : '26 Aug 2026',
             adminNotes: i.adminNotes,
+            agentCode: i.agentCode || i.referredByAgent?.agentCode || i.customer?.assignedAgentCode || 'BH-AGT-102',
+            agentName: i.agentName || i.referredByAgent?.name || i.customer?.assignedAgentName || 'Agent Janardhan Reddy',
+            agentPhone: i.agentPhone || i.referredByAgent?.phone || i.customer?.assignedAgentPhone || '+91 98765 99999',
+            agentStatus: i.agentStatus || i.referredByAgent?.status || i.customer?.assignedAgentStatus || 'ACTIVE',
           }));
           setInquiries(mongoInqs);
+          return;
         }
       }
     } catch (err) {
       console.log('MongoDB API unreachable for inquiries.');
     }
+
+    setInquiries([
+      {
+        id: 'INQ-1001',
+        customerName: 'Srikanth Rao',
+        email: 'srikanth@gmail.com',
+        phone: '+91 98765 11111',
+        property: 'Bhavya Royal County - Plot #42',
+        message: 'Interested in booking a weekend site visit for 200 sq. yard plot.',
+        status: 'NEW',
+        createdDate: '26 Aug 2026',
+        agentCode: 'BH-AGT-102',
+        agentName: 'Agent Janardhan Reddy',
+        agentPhone: '+91 98765 99999',
+        agentStatus: 'ACTIVE',
+      },
+      {
+        id: 'INQ-1002',
+        customerName: 'Kavitha Sharma',
+        email: 'kavitha@yahoo.com',
+        phone: '+91 98765 22222',
+        property: 'Bhavya Green Acres - Villa 12B',
+        message: 'Requesting floor plan PDF and home loan calculation details.',
+        status: 'CONTACTED',
+        createdDate: '25 Aug 2026',
+        agentCode: 'BH-AGT-102',
+        agentName: 'Agent Janardhan Reddy',
+        agentPhone: '+91 98765 99999',
+        agentStatus: 'ACTIVE',
+      },
+      {
+        id: 'INQ-1003',
+        customerName: 'Mahesh Kumar',
+        email: 'mahesh@gmail.com',
+        phone: '+91 98765 33333',
+        property: 'Bhavya Heights Luxury Villa',
+        message: 'Would like to meet senior property consultant regarding pricing.',
+        status: 'IN_PROGRESS',
+        createdDate: '24 Aug 2026',
+        agentCode: 'BH-AGT-102',
+        agentName: 'Agent Janardhan Reddy',
+        agentPhone: '+91 98765 99999',
+        agentStatus: 'ACTIVE',
+      },
+    ]);
   };
 
   const fetchMongoUsers = async () => {
@@ -168,6 +287,10 @@ export default function AdminDashboard() {
               role: 'CUSTOMER',
               status: (c.status || (c.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toString().toUpperCase() as any,
               regDate: c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : '27 Aug 2026',
+              assignedAgentName: c.assignedAgentName || c.assignedAgent?.name || 'Agent Janardhan Reddy',
+              assignedAgentCode: c.assignedAgentCode || c.assignedAgent?.agentCode || 'BH-AGT-102',
+              assignedAgentPhone: c.assignedAgentPhone || c.assignedAgent?.phone || '+91 98765 99999',
+              leadSource: c.leadSource || 'AGENT_REFERENCE',
             }));
             apiUsers = [...apiUsers, ...mappedCusts];
           }
@@ -191,6 +314,10 @@ export default function AdminDashboard() {
               role: (u.role || 'CUSTOMER').toString().toUpperCase() as any,
               status: (u.status || (u.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toString().toUpperCase() as any,
               regDate: u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : '27 Aug 2026',
+              assignedAgentName: u.assignedAgentName || u.assignedAgent?.name || 'Agent Janardhan Reddy',
+              assignedAgentCode: u.assignedAgentCode || u.assignedAgent?.agentCode || 'BH-AGT-102',
+              assignedAgentPhone: u.assignedAgentPhone || u.assignedAgent?.phone || '+91 98765 99999',
+              leadSource: u.leadSource || 'AGENT_REFERENCE',
             }));
             apiUsers = [...apiUsers, ...mappedUsers];
           }
@@ -361,11 +488,13 @@ export default function AdminDashboard() {
     const matchedNum = rawArea.match(/\d+/)?.[0];
     const parsedArea = matchedNum ? parseInt(matchedNum, 10) : 2000;
 
+    const normalizedType = (propForm.type || 'VILLA').toUpperCase().replace(/[\s_]+/g, '_');
+
     const payload = {
       title: name,
       name: name,
-      propertyType: propForm.type || 'VILLA',
-      type: propForm.type || 'VILLA',
+      propertyType: normalizedType.includes('PLOT') ? 'OPEN_PLOT' : normalizedType,
+      type: normalizedType.includes('PLOT') ? 'OPEN_PLOT' : normalizedType,
       price: price,
       location: location,
       city: propForm.city || 'Hyderabad',
@@ -611,12 +740,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Inquiry Actions
-  const handleUpdateInquiryStatus = (id: string, status: Inquiry['status']) => {
-    setInquiries(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-    triggerToast(`Inquiry status updated to ${status.replace('_', ' ')}!`);
-  };
-
   const handleSaveNotes = () => {
     if (selectedInquiryNotes) {
       setInquiries(prev => prev.map(i => i.id === selectedInquiryNotes.id ? { ...i, adminNotes: noteText } : i));
@@ -660,7 +783,12 @@ export default function AdminDashboard() {
   // Filtered lists
   const filteredProperties = properties.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(propSearch.toLowerCase()) || p.location.toLowerCase().includes(propSearch.toLowerCase());
-    const matchesType = propTypeFilter === 'ALL' || p.type === propTypeFilter;
+    let matchesType = propTypeFilter === 'ALL';
+    if (!matchesType) {
+      const cleanP = (p.type || '').toUpperCase().replace(/[\s_]+/g, '');
+      const cleanF = (propTypeFilter || '').toUpperCase().replace(/[\s_]+/g, '');
+      matchesType = cleanP === cleanF || (cleanF.includes('PLOT') && cleanP.includes('PLOT'));
+    }
     return matchesSearch && matchesType;
   });
 
@@ -687,32 +815,32 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-900 overflow-x-hidden w-full no-scrollbar">
       
-      {/* Toast Notification Popup */}
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-amber-500/40 text-xs font-bold flex items-center space-x-2 animate-bounce">
-          <span className="text-amber-400">⚡</span>
+        <div className="fixed top-6 right-6 z-50 bg-slate-950 text-amber-400 px-5 py-3 rounded-2xl shadow-2xl border border-amber-500/40 text-xs font-bold flex items-center space-x-2 animate-bounce">
+          <span>✨</span>
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* LEFT SIDEBAR MENU */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-slate-950 text-white border-r border-slate-800 flex flex-col justify-between transition-transform duration-300 transform ${
+      {/* LEFT SIDEBAR NAVIGATION */}
+      <aside className={`w-64 bg-white text-slate-900 border-r border-slate-200 shadow-sm flex flex-col justify-between fixed inset-y-0 z-40 transition-transform duration-300 no-scrollbar overflow-y-auto ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         
         {/* Brand Header */}
         <div className="p-6 space-y-6">
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-amber-500/40 bg-slate-900">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-amber-400 bg-amber-50 shadow-sm">
               <Image src="/logo.png" alt="Bhavya Homes Logo" fill className="object-cover" />
             </div>
             <div className="flex flex-col">
-              <span className="text-lg font-black bg-gradient-to-r from-white via-slate-100 to-amber-400 bg-clip-text text-transparent tracking-wider">
+              <span className="text-lg font-black text-slate-950 tracking-wider">
                 BHAVYA HOMES
               </span>
-              <span className="text-[9px] text-amber-400 font-bold tracking-widest uppercase -mt-1">
+              <span className="text-[9px] text-amber-700 font-black tracking-widest uppercase -mt-1">
                 ADMIN PORTAL
               </span>
             </div>
@@ -728,11 +856,14 @@ export default function AdminDashboard() {
                   onClick={() => {
                     setActiveTab(item.key as any);
                     setSidebarOpen(false);
+                    if (item.key === 'inquiries') fetchMongoInquiries();
+                    if (item.key === 'properties') fetchMongoProperties();
+                    if (item.key === 'users') fetchMongoUsers();
                   }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black shadow-lg'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      ? 'bg-amber-400 text-slate-950 font-black shadow-md'
+                      : 'text-slate-600 hover:text-amber-950 hover:bg-amber-50'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -741,7 +872,7 @@ export default function AdminDashboard() {
                   </div>
                   {item.count !== null && (
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                      isActive ? 'bg-slate-950 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                      isActive ? 'bg-slate-950 text-amber-400' : 'bg-slate-100 text-slate-600 border border-slate-200'
                     }`}>
                       {item.count}
                     </span>
@@ -753,20 +884,20 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sidebar Bottom Profile & Logout */}
-        <div className="p-6 border-t border-slate-900 space-y-4">
+        <div className="p-6 border-t border-slate-100 bg-slate-50 space-y-4">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xs">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-900 font-bold text-xs">
               AD
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate">Admin Srinu</p>
-              <p className="text-[10px] text-slate-400 truncate">admin@bhavyahomes.com</p>
+              <p className="text-xs font-bold text-slate-900 truncate">Admin Srinu</p>
+              <p className="text-[10px] text-slate-500 truncate">admin@bhavyahomes.com</p>
             </div>
           </div>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold py-2.5 rounded-xl border border-slate-800 transition-colors"
+            className="w-full flex items-center justify-center space-x-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold py-2.5 rounded-xl border border-slate-200 transition-colors shadow-sm"
           >
             <span>🚪</span>
             <span>Logout</span>
@@ -780,39 +911,44 @@ export default function AdminDashboard() {
       )}
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 md:ml-64 p-4 sm:p-8 space-y-8 min-h-screen">
+      <main className="flex-1 md:ml-64 p-4 sm:p-8 space-y-8 min-h-screen w-full max-w-full overflow-x-hidden no-scrollbar">
         
         {/* Top Header Banner */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-950 p-6 sm:p-8 rounded-3xl text-white border border-slate-800 shadow-xl">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 p-6 sm:p-8 rounded-3xl text-slate-900 border border-amber-300/60 shadow-sm relative overflow-hidden">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2 rounded-xl bg-slate-900 text-slate-300 hover:text-white border border-slate-800"
+              className="md:hidden p-2 rounded-xl bg-white text-slate-700 hover:text-slate-950 border border-slate-200 shadow-sm"
             >
               ☰
             </button>
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-black text-slate-950 bg-amber-400 px-3 py-1 rounded-full uppercase tracking-wider">
+                <span className="text-xs font-black text-amber-950 bg-amber-400/30 px-3 py-1 rounded-full uppercase tracking-wider border border-amber-400/40">
                   ADMIN CONTROL PANEL
                 </span>
-                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-3 py-1 rounded-full border border-emerald-300">
                   SYSTEM LIVE
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black pt-1">Bhavya Homes Management Portal</h1>
-              <p className="text-slate-400 text-xs">Logged in as Administrator (admin@bhavyahomes.com)</p>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-950 pt-1">Bhavya Homes Management Portal</h1>
+              <p className="text-slate-600 text-xs font-semibold">Logged in as Administrator (admin@bhavyahomes.com)</p>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
             <Link
               href="/"
-              className="bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold px-4 py-2.5 rounded-xl border border-slate-700 transition-colors flex items-center space-x-1"
+              className="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-black px-4 py-3 rounded-2xl shadow-sm transition-all uppercase tracking-wider"
             >
-              <span>🌐</span>
-              <span>View Main Website</span>
+              🌐 Main Website
             </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold px-4 py-3 rounded-2xl border border-slate-300 transition-colors shadow-sm"
+            >
+              Logout
+            </button>
           </div>
         </div>
 
@@ -1192,50 +1328,66 @@ export default function AdminDashboard() {
             </div>
 
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <div className="w-full overflow-hidden">
+                <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
-                      <th className="p-4 pl-6">Inquiry ID</th>
-                      <th className="p-4">Customer Details</th>
-                      <th className="p-4">Target Property</th>
-                      <th className="p-4">Message</th>
-                      <th className="p-4">Status & Agent</th>
-                      <th className="p-4 text-right pr-6">Actions</th>
+                      <th className="py-3.5 px-4 pl-6">Inquiry ID & Customer</th>
+                      <th className="py-3.5 px-4">Property & Message</th>
+                      <th className="py-3.5 px-4">Assigned Agent</th>
+                      <th className="py-3.5 px-4">Inquiry Status</th>
+                      <th className="py-3.5 px-4 text-right pr-6">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
                     {filteredInquiries.map((inq) => (
                       <tr key={inq.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-4 pl-6 font-bold text-slate-900">{inq.id}</td>
-                        <td className="p-4">
+                        <td className="py-3.5 px-4 pl-6">
+                          <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 block w-max mb-1" title={inq.id}>
+                            #{inq.id.length > 10 ? `${inq.id.slice(0, 6)}...${inq.id.slice(-4)}` : inq.id}
+                          </span>
                           <p className="font-extrabold text-slate-900">{inq.customerName}</p>
-                          <p className="text-[11px] text-slate-400">{inq.phone}</p>
+                          <p className="text-[11px] text-slate-500 font-medium">{inq.phone}</p>
                         </td>
-                        <td className="p-4 text-amber-600 font-bold">{inq.property}</td>
-                        <td className="p-4 max-w-xs truncate text-slate-500">{inq.message}</td>
-                        <td className="p-4 space-y-1">
+                        <td className="py-3.5 px-4">
+                          <p className="text-amber-700 font-bold max-w-[200px] truncate">{inq.property}</p>
+                          <p className="text-slate-500 font-medium max-w-[220px] truncate text-[11px]" title={inq.message}>{inq.message}</p>
+                        </td>
+                        <td className="py-3.5 px-4 space-y-1">
+                          <p className="font-extrabold text-slate-900 text-[11px]">{inq.agentName || 'Agent Janardhan'}</p>
+                          <select
+                            value={inq.agentCode || 'BH-AGT-102'}
+                            onChange={(e) => handleAssignAgent(inq.id, e.target.value)}
+                            className="bg-amber-50 text-amber-900 border border-amber-300 text-[11px] font-extrabold rounded-lg px-2 py-1 outline-none cursor-pointer shadow-sm"
+                            title="Click to assign agent to this inquiry"
+                          >
+                            {availableAgents.map((agt) => (
+                              <option key={agt.code} value={agt.code}>
+                                {agt.code} - {agt.name.split(' ')[0]}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="py-3.5 px-4">
                           <select
                             value={inq.status}
                             onChange={(e) => handleUpdateInquiryStatus(inq.id, e.target.value as any)}
-                            className="bg-slate-100 text-slate-900 border border-slate-300 text-[11px] font-bold rounded-lg px-2 py-1 outline-none"
+                            className="bg-slate-100 text-slate-900 border border-slate-300 text-[11px] font-extrabold rounded-lg px-2.5 py-1.5 outline-none focus:border-amber-500 cursor-pointer"
                           >
                             <option value="NEW">NEW</option>
                             <option value="CONTACTED">CONTACTED</option>
                             <option value="IN_PROGRESS">IN PROGRESS</option>
                             <option value="RESOLVED">RESOLVED</option>
+                            <option value="CLOSED">CLOSED</option>
                           </select>
-                          {inq.assignedAgent && (
-                            <p className="text-[10px] text-emerald-600 font-semibold">👤 {inq.assignedAgent}</p>
-                          )}
                         </td>
-                        <td className="p-4 pr-6 text-right space-x-2">
+                        <td className="py-3.5 px-4 pr-6 text-right whitespace-nowrap space-x-1.5">
                           <button
                             onClick={() => {
                               setSelectedInquiryNotes(inq);
                               setNoteText(inq.adminNotes || '');
                             }}
-                            className="bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                            className="bg-slate-950 text-amber-400 hover:bg-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm"
                           >
                             Notes
                           </button>

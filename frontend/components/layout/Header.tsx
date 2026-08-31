@@ -63,12 +63,12 @@ export default function Header() {
   const dashboardHref = user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/customer';
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 text-white shadow-xl">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 text-slate-900 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
         {/* Brand Logo & Name */}
         <Link href="/" className="flex items-center space-x-3 group">
-          <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md border border-amber-500/40 group-hover:scale-105 transition-transform bg-slate-900">
+          <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-sm border border-amber-400 group-hover:scale-105 transition-transform bg-amber-50">
             <Image
               src="/logo.png"
               alt="Bhavya Homes Logo"
@@ -78,17 +78,17 @@ export default function Header() {
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-white via-slate-100 to-amber-400 bg-clip-text text-transparent tracking-wider">
+            <span className="text-xl sm:text-2xl font-black text-slate-950 tracking-wider">
               BHAVYA HOMES
             </span>
-            <span className="text-[10px] text-amber-400 font-bold tracking-widest uppercase -mt-1">
+            <span className="text-[10px] text-amber-700 font-black tracking-widest uppercase -mt-1">
               BUILDING A NEW FUTURE
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center space-x-7 text-xs font-bold uppercase tracking-wider text-slate-300">
+        <nav className="hidden lg:flex items-center space-x-7 text-xs font-extrabold uppercase tracking-wider text-slate-700">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -97,8 +97,8 @@ export default function Header() {
                 href={link.href}
                 className={`transition-colors py-1 border-b-2 ${
                   isActive
-                    ? 'text-amber-500 border-amber-500 font-black'
-                    : 'text-slate-200 border-transparent hover:text-amber-400 hover:border-amber-400/50'
+                    ? 'text-amber-700 border-amber-500 font-black'
+                    : 'text-slate-700 border-transparent hover:text-amber-600 hover:border-amber-400'
                 }`}
               >
                 {link.name}
@@ -114,10 +114,10 @@ export default function Header() {
             <div className="flex items-center space-x-2">
               <Link
                 href={dashboardHref}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-extrabold transition-all ${
                   pathname.startsWith('/dashboard')
-                    ? 'bg-amber-500 text-slate-950 border-amber-400'
-                    : 'bg-slate-900 text-amber-400 border-slate-800 hover:bg-slate-800'
+                    ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-sm'
+                    : 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200'
                 }`}
               >
                 <span>👤</span>
@@ -125,7 +125,7 @@ export default function Header() {
               </Link>
               <button
                 onClick={handleLogout}
-                className="hidden sm:inline-block text-xs font-semibold text-slate-400 hover:text-red-400 px-2 py-1 transition-colors"
+                className="hidden sm:inline-block text-xs font-bold text-slate-500 hover:text-red-600 px-2 py-1 transition-colors"
                 title="Logout"
               >
                 Logout
@@ -134,7 +134,7 @@ export default function Header() {
           ) : (
             <Link
               href="/auth/login"
-              className="hidden sm:inline-block text-xs font-semibold text-slate-300 hover:text-white px-2 py-2 transition-colors"
+              className="hidden sm:inline-block text-xs font-extrabold text-slate-700 hover:text-slate-950 px-2 py-2 transition-colors"
             >
               Login
             </Link>
@@ -142,7 +142,7 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className="text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 px-4 py-2.5 rounded-xl shadow-md transition-all uppercase tracking-wider transform hover:scale-105"
+            className="text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-500 px-4 py-2.5 rounded-xl shadow-sm transition-all uppercase tracking-wider transform hover:scale-105"
           >
             Book Site Visit
           </Link>
@@ -150,7 +150,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            className="lg:hidden p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {mobileMenuOpen ? (
@@ -165,7 +165,7 @@ export default function Header() {
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-slate-900 border-b border-slate-800 px-4 pt-2 pb-6 space-y-2">
+        <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-6 space-y-2 shadow-lg">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -175,8 +175,8 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                   isActive
-                    ? 'bg-amber-500/10 text-amber-400 font-bold border-l-4 border-amber-500'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-amber-50 text-amber-900 font-extrabold border-l-4 border-amber-500'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950'
                 }`}
               >
                 {link.name}
@@ -184,13 +184,13 @@ export default function Header() {
             );
           })}
           {user && (
-            <div className="pt-2 border-t border-slate-800">
+            <div className="pt-2 border-t border-slate-100">
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   handleLogout();
                 }}
-                className="w-full text-left text-xs font-bold text-red-400 py-2 px-4"
+                className="w-full text-left text-xs font-bold text-red-600 py-2 px-4"
               >
                 Logout ({user.name})
               </button>

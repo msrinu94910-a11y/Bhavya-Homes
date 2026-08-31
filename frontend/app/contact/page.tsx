@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -13,6 +13,20 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedEmail = localStorage.getItem('user_email');
+      const savedName = localStorage.getItem('user_name');
+      if (savedEmail || savedName) {
+        setFormData((prev) => ({
+          ...prev,
+          email: prev.email || savedEmail || '',
+          name: prev.name || savedName || '',
+        }));
+      }
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.phone) return;
@@ -20,10 +34,17 @@ export default function ContactPage() {
     setLoading(true);
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('user_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
       await fetch('http://localhost:5000/api/inquiries', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
+          name: formData.name,
           customerName: formData.name,
           email: formData.email,
           phone: formData.phone,
