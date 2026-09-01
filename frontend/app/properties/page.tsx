@@ -110,6 +110,7 @@ export default function PropertiesPage() {
                   src={prop.image}
                   alt={prop.title}
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-4 left-4 bg-slate-950/85 backdrop-blur-md text-amber-400 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider border border-amber-500/40 shadow-md">

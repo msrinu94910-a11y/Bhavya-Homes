@@ -4,6 +4,8 @@ import { Property, PropertyType, PropertyStatus, AreaUnit } from '../models/Prop
 import { Project, ProjectType, ProjectStatus } from '../models/Project.js';
 import { Inquiry, InquirySource, InquiryStatus } from '../models/Inquiry.js';
 import { Lead } from '../models/Lead.js';
+import { SiteVisit, SiteVisitStatus } from '../models/SiteVisit.js';
+import { SavedProperty } from '../models/SavedProperty.js';
 import { config } from '../config/environment.js';
 
 async function seedDatabase() {
@@ -12,10 +14,21 @@ async function seedDatabase() {
     await mongoose.connect(config.mongoUri, { serverSelectionTimeoutMS: 5000 });
     console.log('Connected successfully to MongoDB Atlas cluster!');
 
-    // 0. Clear stale test inquiries with dirty test messages
-    console.log('Clearing old test inquiries...');
+    // 0. Clear stale test inquiries with dirty test messages and duplicate records
+    console.log('Clearing old & duplicate test inquiries...');
     await Inquiry.deleteMany({ message: { $regex: /b hvvg|test|asdf|qwerty/i } });
     await Lead.deleteMany({ notes: { $regex: /b hvvg|test|asdf|qwerty/i } });
+
+    const allInqs = await Inquiry.find({});
+    const seenKeys = new Set<string>();
+    for (const inq of allInqs) {
+      const key = `${(inq.email || '').toLowerCase().trim()}_${(inq.message || '').toLowerCase().trim()}`;
+      if (seenKeys.has(key)) {
+        await Inquiry.deleteOne({ _id: inq._id });
+      } else {
+        seenKeys.add(key);
+      }
+    }
 
     // 1. Seed Admin & Agents
     console.log('Seeding Admin & Agent Accounts...');
@@ -89,6 +102,8 @@ async function seedDatabase() {
     // 2. Seed Real Customer Users
     console.log('Seeding Real Customer Profiles...');
     const customersData = [
+      { name: 'Manjunadh Reddy', email: 'reddy@gmail.com', phone: '+91 98765 43210', agent: agt1 },
+      { name: 'Kranthi Kumar', email: 'kranthi@gmail.com', phone: '+91 98765 00112', agent: agt1 },
       { name: 'Srikanth Rao', email: 'srikanth@gmail.com', phone: '+91 98765 12345', agent: agt2 },
       { name: 'Kavitha Sharma', email: 'kavitha@yahoo.com', phone: '+91 98765 67890', agent: agt2 },
       { name: 'Mahesh Kumar', email: 'mahesh@gmail.com', phone: '+91 98765 11223', agent: agt1 },
@@ -459,6 +474,96 @@ async function seedDatabase() {
         inqData,
         { upsert: true, new: true }
       );
+    }
+
+    // 6. Seed Real Site Visits & Saved Properties for Customers
+    console.log('Seeding Real Site Visits & Saved Properties in MongoDB...');
+    const allProps = await Property.find({});
+    const kranthiUser = seededCustomers['kranthi@gmail.com'];
+    const srikanthUser = seededCustomers['srikanth@gmail.com'];
+    const reddyUser = seededCustomers['reddy@gmail.com'];
+
+    if (reddyUser && allProps.length > 0) {
+      await SiteVisit.deleteMany({ customer: reddyUser._id });
+      await SavedProperty.deleteMany({ user: reddyUser._id });
+
+      const prop1 = allProps[0];
+      const prop2 = allProps[1] || allProps[0];
+
+      await SiteVisit.create([
+        {
+          customer: reddyUser._id,
+          property: prop1._id,
+          requestedDate: new Date('2026-09-04'),
+          requestedTime: '11:00 AM',
+          confirmedDate: new Date('2026-09-04'),
+          confirmedTime: '11:00 AM',
+          status: SiteVisitStatus.CONFIRMED,
+          adminNotes: 'Confirmed. Assigned Agent: Srenivasulu Reddy (+91 89659 92274)',
+        },
+        {
+          customer: reddyUser._id,
+          property: prop2._id,
+          requestedDate: new Date('2026-09-06'),
+          requestedTime: '03:00 PM',
+          status: SiteVisitStatus.REQUESTED,
+          adminNotes: 'Cab pickup requested from Miyapur metro station.',
+        },
+      ]);
+
+      await SavedProperty.create([
+        { user: reddyUser._id, property: prop1._id },
+        { user: reddyUser._id, property: prop2._id },
+      ]);
+    }
+
+    if (kranthiUser && allProps.length > 0) {
+      // Clear old test site visits for clean state
+      await SiteVisit.deleteMany({ customer: kranthiUser._id });
+      await SavedProperty.deleteMany({ user: kranthiUser._id });
+
+      const prop1 = allProps[0];
+      const prop2 = allProps[1] || allProps[0];
+      const prop3 = allProps[2] || allProps[0];
+
+      await SiteVisit.create([
+        {
+          customer: kranthiUser._id,
+          property: prop1._id,
+          requestedDate: new Date('2026-08-28'),
+          requestedTime: '11:00 AM',
+          confirmedDate: new Date('2026-08-28'),
+          confirmedTime: '11:00 AM',
+          status: SiteVisitStatus.CONFIRMED,
+          adminNotes: 'Confirmed. Assigned Agent: Srenivasulu Reddy (+91 89659 92274)',
+        },
+        {
+          customer: kranthiUser._id,
+          property: prop2._id,
+          requestedDate: new Date('2026-08-30'),
+          requestedTime: '03:30 PM',
+          status: SiteVisitStatus.REQUESTED,
+          adminNotes: 'Cab pickup requested from Gachibowli junction.',
+        },
+      ]);
+
+      await SavedProperty.create([
+        { user: kranthiUser._id, property: prop1._id },
+        { user: kranthiUser._id, property: prop2._id },
+        { user: kranthiUser._id, property: prop3._id },
+      ]);
+    }
+
+    if (srikanthUser && allProps.length > 0) {
+      await SiteVisit.deleteMany({ customer: srikanthUser._id });
+      await SiteVisit.create({
+        customer: srikanthUser._id,
+        property: allProps[0]._id,
+        requestedDate: new Date('2026-09-02'),
+        requestedTime: '10:00 AM',
+        status: SiteVisitStatus.CONFIRMED,
+        adminNotes: 'Assigned Agent: Agent Janardhan Reddy (+91 98765 99999)',
+      });
     }
 
     console.log('✅ BRAND-NEW REAL DATA SUCCESSFULLY STORED & SEEDED IN MONGODB ATLAS!');

@@ -8,6 +8,11 @@ export class CustomerController {
   static async getSavedProperties(req: AuthRequest, res: Response): Promise<Response> {
     try {
       let userId = req.user?._id?.toString();
+      const email = req.query.email as string;
+      if (email) {
+        const customerUser = await User.findOne({ email });
+        if (customerUser) userId = customerUser._id.toString();
+      }
       if (!userId) {
         const customerUser = await User.findOne({ role: 'CUSTOMER' });
         userId = customerUser?._id?.toString() || '650000000000000000000002';

@@ -9,5 +9,6 @@ const router = Router();
 router.post('/', InquiryController.create);
 router.get('/', InquiryController.getAll);
 router.put('/:id', InquiryController.updateStatus);
+router.delete('/:id', InquiryController.delete);
 
 export default router;

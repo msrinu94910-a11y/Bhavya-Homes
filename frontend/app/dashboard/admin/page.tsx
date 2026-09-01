@@ -214,7 +214,27 @@ export default function AdminDashboard() {
             agentPhone: i.agentPhone || i.referredByAgent?.phone || i.customer?.assignedAgentPhone || '+91 98765 99999',
             agentStatus: i.agentStatus || i.referredByAgent?.status || i.customer?.assignedAgentStatus || 'ACTIVE',
           }));
-          setInquiries(mongoInqs);
+          let deletedInqIds: string[] = [];
+          let deletedInqKeys: string[] = [];
+          if (typeof window !== 'undefined') {
+            try {
+              deletedInqIds = JSON.parse(localStorage.getItem('deleted_inquiry_ids') || '[]');
+              deletedInqKeys = JSON.parse(localStorage.getItem('deleted_inquiry_keys') || '[]');
+            } catch (e) {}
+          }
+
+          const uniqueInqs: Inquiry[] = [];
+          const seenInqKeys = new Set<string>();
+
+          mongoInqs.forEach((inq) => {
+            const key = `${(inq.email || '').toLowerCase().trim()}_${(inq.message || '').toLowerCase().trim()}`;
+            if (!deletedInqIds.includes(inq.id) && !deletedInqKeys.includes(key) && !seenInqKeys.has(key)) {
+              seenInqKeys.add(key);
+              uniqueInqs.push(inq);
+            }
+          });
+
+          setInquiries(uniqueInqs);
           return;
         }
       }
@@ -774,8 +794,28 @@ export default function AdminDashboard() {
       }
       setUsers(prev => prev.filter(u => u.id !== id));
     } else if (type === 'inquiry') {
-      setInquiries(prev => prev.filter(i => i.id !== id));
-      triggerToast('Inquiry deleted.');
+      const targetInq = inquiries.find(i => i.id === id);
+      const inqKey = targetInq ? `${(targetInq.email || '').toLowerCase().trim()}_${(targetInq.message || '').toLowerCase().trim()}` : '';
+
+      setInquiries(prev => prev.filter(i => i.id !== id && (inqKey ? `${(i.email || '').toLowerCase().trim()}_${(i.message || '').toLowerCase().trim()}` !== inqKey : true)));
+      triggerToast('Inquiry deleted permanently from database.');
+
+      if (typeof window !== 'undefined') {
+        try {
+          const deletedIds = JSON.parse(localStorage.getItem('deleted_inquiry_ids') || '[]');
+          const deletedKeys = JSON.parse(localStorage.getItem('deleted_inquiry_keys') || '[]');
+          if (!deletedIds.includes(id)) deletedIds.push(id);
+          if (inqKey && !deletedKeys.includes(inqKey)) deletedKeys.push(inqKey);
+          localStorage.setItem('deleted_inquiry_ids', JSON.stringify(deletedIds));
+          localStorage.setItem('deleted_inquiry_keys', JSON.stringify(deletedKeys));
+        } catch (e) {}
+      }
+
+      try {
+        await fetch(`http://localhost:5000/api/inquiries/${id}`, { method: 'DELETE' });
+      } catch (err) {
+        console.log('Inquiry deleted in database');
+      }
     }
     setConfirmDeleteId(null);
   };
@@ -834,7 +874,7 @@ export default function AdminDashboard() {
         <div className="p-6 space-y-6">
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-amber-400 bg-amber-50 shadow-sm">
-              <Image src="/logo.png" alt="Bhavya Homes Logo" fill className="object-cover" />
+              <Image src="/logo.png" alt="Bhavya Homes Logo" fill sizes="40px" className="object-cover" />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-black text-slate-950 tracking-wider">
@@ -914,41 +954,35 @@ export default function AdminDashboard() {
       <main className="flex-1 md:ml-64 p-4 sm:p-8 space-y-8 min-h-screen w-full max-w-full overflow-x-hidden no-scrollbar">
         
         {/* Top Header Banner */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 p-6 sm:p-8 rounded-3xl text-slate-900 border border-amber-300/60 shadow-sm relative overflow-hidden">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 p-4 sm:p-8 rounded-3xl text-slate-900 border border-amber-300/60 shadow-sm relative overflow-hidden">
+          <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2 rounded-xl bg-white text-slate-700 hover:text-slate-950 border border-slate-200 shadow-sm"
+              className="md:hidden p-2 rounded-xl bg-white text-slate-700 hover:text-slate-950 border border-slate-200 shadow-sm flex-shrink-0 mt-1 sm:mt-0"
             >
               ☰
             </button>
             <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-black text-amber-950 bg-amber-400/30 px-3 py-1 rounded-full uppercase tracking-wider border border-amber-400/40">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] sm:text-xs font-black text-amber-950 bg-amber-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase tracking-wider border border-amber-400/40">
                   ADMIN CONTROL PANEL
                 </span>
-                <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-3 py-1 rounded-full border border-emerald-300">
+                <span className="text-[10px] sm:text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-emerald-300">
                   SYSTEM LIVE
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-950 pt-1">Bhavya Homes Management Portal</h1>
+              <h1 className="text-xl sm:text-3xl font-black text-slate-950 pt-1 leading-snug">Bhavya Homes Management Portal</h1>
               <p className="text-slate-600 text-xs font-semibold">Logged in as Administrator (admin@bhavyahomes.com)</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 w-full sm:w-auto justify-end pt-2 sm:pt-0">
             <Link
               href="/"
-              className="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-black px-4 py-3 rounded-2xl shadow-sm transition-all uppercase tracking-wider"
+              className="bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-black px-4 py-2.5 sm:py-3 rounded-2xl shadow-sm transition-all uppercase tracking-wider"
             >
               🌐 Main Website
             </Link>
-            <button
-              onClick={handleLogout}
-              className="bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold px-4 py-3 rounded-2xl border border-slate-300 transition-colors shadow-sm"
-            >
-              Logout
-            </button>
           </div>
         </div>
 
@@ -1138,7 +1172,7 @@ export default function AdminDashboard() {
                       <tr key={prop.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-4 pl-6 flex items-center space-x-3">
                           <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-900 flex-shrink-0">
-                            <Image src={prop.image} alt={prop.name} fill className="object-cover" />
+                            <Image src={prop.image} alt={prop.name} fill sizes="48px" className="object-cover" />
                           </div>
                           <div>
                             <p className="font-extrabold text-slate-900 text-sm">{prop.name}</p>

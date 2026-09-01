@@ -6,7 +6,7 @@ import { getPagination } from '../utils/pagination.js';
 export class InquiryService {
   static async getAllInquiries(query: any) {
     const { page, limit, skip } = getPagination(query.page, query.limit);
-    const filter: any = { isDeleted: false };
+    const filter: any = { isDeleted: { $ne: true } };
 
     if (query.status) filter.status = query.status;
     if (query.customer) filter.customer = query.customer;
@@ -155,6 +155,19 @@ export class InquiryService {
       });
     }
 
+    return inquiry;
+  }
+
+  static async deleteInquiry(id: string) {
+    let inquiry: any = await Inquiry.findByIdAndUpdate(
+      id,
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true }
+    ).catch(() => null);
+
+    if (!inquiry) {
+      await Inquiry.deleteOne({ _id: id }).catch(() => null);
+    }
     return inquiry;
   }
 }

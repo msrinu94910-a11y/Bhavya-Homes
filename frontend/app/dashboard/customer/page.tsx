@@ -32,43 +32,172 @@ export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'visits' | 'shortlist' | 'loan'>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [visitsList, setVisitsList] = useState<SiteVisit[]>([
-    {
-      id: 'sv-101',
-      property: 'Bhavya Royal Luxury Villa',
-      location: 'Gachibowli, Hyderabad',
-      date: '28th August 2026',
-      time: '11:00 AM',
-      status: 'CONFIRMED',
-      agent: 'Vikram Reddy (+91 98765 00011)',
-      image: '/villa1.jpg',
-    },
-    {
-      id: 'sv-102',
-      property: 'Bhavya Green Acres Open Plot Layout',
-      location: 'Shadnagar Corridor, Hyderabad',
-      date: '30th August 2026',
-      time: '03:30 PM',
-      status: 'SCHEDULED',
-      agent: 'Anita Sharma (+91 98765 00022)',
-      image: '/plot1.jpg',
-    },
-  ]);
-
+  const [visitsList, setVisitsList] = useState<SiteVisit[]>([]);
+  const [shortlistedProps, setShortlistedProps] = useState<ShortlistedProp[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
   const [cancellingVisitId, setCancellingVisitId] = useState<string | null>(null);
 
-  const handleCancelVisit = (id: string, propertyName: string) => {
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({
+    property: 'Bhavya Royal Luxury Villa',
+    date: '2026-09-05',
+    time: '11:00 AM',
+    notes: 'Free cab pickup requested from my location',
+  });
+  const [scheduling, setScheduling] = useState(false);
+
+  const handleScheduleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setScheduling(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('user_token') : null;
+      const res = await fetch('http://localhost:5000/api/site-visits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          propertyName: scheduleForm.property,
+          property: scheduleForm.property,
+          requestedDate: scheduleForm.date,
+          requestedTime: scheduleForm.time,
+          adminNotes: scheduleForm.notes,
+        }),
+      });
+      if (res.ok) {
+        setNotification({
+          type: 'success',
+          message: `Site visit for "${scheduleForm.property}" has been scheduled successfully for ${scheduleForm.date}!`,
+        });
+        setShowScheduleModal(false);
+        fetchCustomerData(userEmail);
+      }
+    } catch (err) {
+      console.log('Error scheduling site visit', err);
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const fetchCustomerData = (email: string) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('user_token') : null;
+    const headers: Record<string, string> = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    // 1. Fetch Real-Time Site Visits from Backend MongoDB API
+    fetch(`http://localhost:5000/api/site-visits?email=${encodeURIComponent(email)}`, { headers })
+      .then((res) => res.json())
+      .then((data) => {
+        const rawVisits = data.data || data.siteVisits || data;
+        if (Array.isArray(rawVisits)) {
+          const parsedVisits: SiteVisit[] = rawVisits
+            .filter((v: any) => v.status !== 'CANCELLED')
+            .map((v: any) => {
+              const propObj = typeof v.property === 'object' ? v.property : null;
+              const propName = propObj?.title || propObj?.name || 'Bhavya Venture Property';
+              const location = propObj?.location ? (propObj.location.includes('Hyderabad') ? propObj.location : `${propObj.location}, Hyderabad`) : 'Hyderabad Corridor';
+              const image = (propObj?.images && propObj.images[0]) || propObj?.image || '/villa1.jpg';
+
+              let formattedDate = 'Upcoming Date';
+              if (v.requestedDate) {
+                const d = new Date(v.requestedDate);
+                formattedDate = `${d.getDate()}th ${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
+              }
+
+              let agentInfo = 'Advisory Team (+91 94910 00000)';
+              if (v.adminNotes && v.adminNotes.includes('Assigned Agent:')) {
+                const agentPart = v.adminNotes.split('Assigned Agent:')[1];
+                if (agentPart) agentInfo = agentPart.trim();
+              }
+
+              return {
+                id: v._id || v.id,
+                property: propName,
+                location: location,
+                date: formattedDate,
+                time: v.requestedTime || '11:00 AM',
+                status: (v.status || 'SCHEDULED').toUpperCase(),
+                agent: agentInfo,
+                image: image,
+              };
+            });
+          setVisitsList(parsedVisits);
+        }
+      })
+      .catch(() => {});
+
+    // 2. Fetch Real-Time Saved / Shortlisted Properties from Backend MongoDB API
+    fetch(`http://localhost:5000/api/customer/saved-properties?email=${encodeURIComponent(email)}`, { headers })
+      .then((res) => res.json())
+      .then((data) => {
+        const rawSaved = data.data || data;
+        if (Array.isArray(rawSaved) && rawSaved.length > 0) {
+          const parsedShortlist: ShortlistedProp[] = rawSaved.map((item: any) => {
+            const p = item.property || item;
+            const priceVal = typeof p.price === 'number' ? `₹ ${(p.price / 100000 >= 100 ? (p.price / 10000000).toFixed(2) + ' Crores' : (p.price / 100000).toFixed(1) + ' Lakhs')}` : (p.price || '₹ Call for Price');
+            return {
+              id: p._id || p.id || item._id,
+              name: p.title || p.name || 'Bhavya Homes Luxury Venture',
+              type: (p.propertyType || p.type || 'VILLA').toUpperCase(),
+              location: p.location ? (p.location.includes('Hyderabad') ? p.location : `${p.location}, Hyderabad`) : 'Hyderabad Corridor',
+              price: priceVal,
+              image: (p.images && p.images[0]) || p.image || '/villa1.jpg',
+            };
+          });
+          setShortlistedProps(parsedShortlist);
+        } else {
+          // Fetch featured properties from API if customer saved list is empty
+          fetch('http://localhost:5000/api/properties')
+            .then((res) => res.json())
+            .then((pData) => {
+              const rawProps = pData.data || pData;
+              if (Array.isArray(rawProps)) {
+                const parsedProps: ShortlistedProp[] = rawProps.slice(0, 6).map((p: any) => {
+                  const priceVal = typeof p.price === 'number' ? `₹ ${(p.price / 100000 >= 100 ? (p.price / 10000000).toFixed(2) + ' Crores' : (p.price / 100000).toFixed(1) + ' Lakhs')}` : (p.price || '₹ Call for Price');
+                  return {
+                    id: p._id || p.id,
+                    name: p.title || p.name || 'Bhavya Homes Venture',
+                    type: (p.propertyType || p.type || 'VILLA').toUpperCase(),
+                    location: p.location ? (p.location.includes('Hyderabad') ? p.location : `${p.location}, Hyderabad`) : 'Hyderabad Corridor',
+                    price: priceVal,
+                    image: (p.images && p.images[0]) || p.image || '/villa1.jpg',
+                  };
+                });
+                setShortlistedProps(parsedProps);
+              }
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
+  };
+
+  const handleCancelVisit = async (id: string, propertyName: string) => {
     setCancellingVisitId(id);
-    setTimeout(() => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('user_token') : null;
+      await fetch(`http://localhost:5000/api/site-visits/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
       setVisitsList((prev) => prev.filter((visit) => visit.id !== id));
-      setCancellingVisitId(null);
       setNotification({
         type: 'success',
-        message: `Site visit for "${propertyName}" has been successfully cancelled.`,
+        message: `Site visit for "${propertyName}" has been successfully cancelled in real-time.`,
       });
       setTimeout(() => setNotification(null), 5000);
-    }, 300);
+    } catch (err) {
+      setVisitsList((prev) => prev.filter((visit) => visit.id !== id));
+    } finally {
+      setCancellingVisitId(null);
+    }
   };
 
   useEffect(() => {
@@ -110,6 +239,7 @@ export default function CustomerDashboard() {
           derived = derived.charAt(0).toUpperCase() + derived.slice(1);
           setUserName(derived);
         }
+        fetchCustomerData(email);
       }
     }
   }, [router]);
@@ -123,57 +253,6 @@ export default function CustomerDashboard() {
     }
     router.push('/');
   };
-
-  const shortlistedProps: ShortlistedProp[] = [
-    {
-      id: 'prop-1',
-      name: 'Bhavya Royal Luxury Triplex Villa',
-      type: 'VILLA',
-      location: 'Gachibowli Growth Corridor, Hyderabad',
-      price: '₹ 2.45 Crores',
-      image: '/villa1.jpg',
-    },
-    {
-      id: 'prop-2',
-      name: 'Bhavya Green Acres Premium Open Plot',
-      type: 'OPEN PLOT',
-      location: 'Shadnagar Corridor, Hyderabad',
-      price: '₹ 38.5 Lakhs',
-      image: '/plot1.jpg',
-    },
-    {
-      id: 'prop-3',
-      name: 'Bhavya Grand Residency High-Rise',
-      type: 'APARTMENT',
-      location: 'Miyapur Main Road, Hyderabad',
-      price: '₹ 85.0 Lakhs',
-      image: '/apartment1.jpg',
-    },
-    {
-      id: 'prop-4',
-      name: 'Bhavya Heritage Executive Villa',
-      type: 'VILLA',
-      location: 'Kokapeta Financial District, Hyderabad',
-      price: '₹ 1.65 Crores',
-      image: '/villa1.jpg',
-    },
-    {
-      id: 'prop-5',
-      name: 'Bhavya Horizon Luxury Villa',
-      type: 'VILLA',
-      location: 'Kokapeta Corridor, Hyderabad',
-      price: '₹ 1.85 Crores',
-      image: '/villa1.jpg',
-    },
-    {
-      id: 'prop-6',
-      name: 'Bhavya Drillers Gated Open Plot Layout',
-      type: 'OPEN PLOT',
-      location: 'Shankarpally Corridor, Hyderabad',
-      price: '₹ 1.72 Crores',
-      image: '/plot1.jpg',
-    },
-  ];
 
   const navItems = [
     { id: 'overview', label: 'Dashboard Overview', icon: '📊', count: null },
@@ -307,19 +386,19 @@ export default function CustomerDashboard() {
       <main className="flex-1 md:ml-64 p-4 sm:p-8 space-y-8 min-h-screen w-full max-w-full overflow-x-hidden no-scrollbar">
         
         {/* Top Welcome Header Banner */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 p-6 sm:p-8 rounded-3xl text-slate-900 border border-amber-300/60 shadow-sm relative overflow-hidden">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 p-4 sm:p-8 rounded-3xl text-slate-900 border border-amber-300/60 shadow-sm relative overflow-hidden">
+          <div className="flex items-start sm:items-center space-x-3 sm:space-x-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2.5 rounded-2xl bg-white text-slate-700 hover:text-slate-950 border border-slate-200 shadow-sm"
+              className="md:hidden p-2.5 rounded-2xl bg-white text-slate-700 hover:text-slate-950 border border-slate-200 shadow-sm flex-shrink-0 mt-1 sm:mt-0"
             >
               ☰
             </button>
             <div className="space-y-1">
-              <span className="text-xs font-black text-amber-950 uppercase tracking-widest bg-amber-400/30 px-3.5 py-1 rounded-full border border-amber-400/40">
+              <span className="text-[10px] sm:text-xs font-black text-amber-950 uppercase tracking-widest bg-amber-400/30 px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-full border border-amber-400/40">
                 CUSTOMER DASHBOARD
               </span>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-950 pt-1">Welcome, {userName}!</h1>
+              <h1 className="text-xl sm:text-3xl font-black text-slate-950 pt-1 leading-snug">Welcome, {userName}!</h1>
               <p className="text-slate-600 text-xs font-semibold">{userEmail || 'customer@bhavyahomes.com'}</p>
             </div>
           </div>
@@ -349,7 +428,7 @@ export default function CustomerDashboard() {
                   <div key={prop.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-4 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
                     <div>
                       <div className="relative h-48 w-full bg-slate-900 overflow-hidden">
-                        <Image src={prop.image} alt={prop.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <Image src={prop.image} alt={prop.name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />
                         <span className="absolute top-3 left-3 bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
                           {prop.type}
                         </span>
@@ -416,12 +495,12 @@ export default function CustomerDashboard() {
                 <h2 className="text-2xl font-black text-slate-900">Scheduled Site Visits Management</h2>
                 <p className="text-xs text-slate-500">Track cab pickup details & assigned agent contact info</p>
               </div>
-              <Link
-                href="/contact"
+              <button
+                onClick={() => setShowScheduleModal(true)}
                 className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black px-4 py-2.5 rounded-2xl text-xs uppercase tracking-wider shadow-sm transition-all"
               >
                 + Schedule New Visit
-              </Link>
+              </button>
             </div>
 
             {visitsList.length === 0 ? (
@@ -435,12 +514,12 @@ export default function CustomerDashboard() {
                     You have no active site visits scheduled. Book a free cab visit to tour our gated communities & villa layouts!
                   </p>
                 </div>
-                <Link
-                  href="/contact"
+                <button
+                  onClick={() => setShowScheduleModal(true)}
                   className="inline-block bg-amber-400 hover:bg-amber-500 text-slate-950 font-black px-6 py-3 rounded-2xl text-xs uppercase tracking-wider shadow-sm transition-all"
                 >
                   + Schedule Site Visit Now
-                </Link>
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -454,6 +533,7 @@ export default function CustomerDashboard() {
                         src={visit.image}
                         alt={visit.property}
                         fill
+                        sizes="160px"
                         className="object-cover"
                       />
                       <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full">
@@ -513,7 +593,7 @@ export default function CustomerDashboard() {
               {shortlistedProps.map((prop) => (
                 <div key={prop.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-4 hover:shadow-md transition-all">
                   <div className="relative h-44 w-full bg-slate-900">
-                    <Image src={prop.image} alt={prop.name} fill className="object-cover" />
+                    <Image src={prop.image} alt={prop.name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
                     <span className="absolute top-3 left-3 bg-amber-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase">
                       {prop.type}
                     </span>
@@ -583,6 +663,107 @@ export default function CustomerDashboard() {
                   Contact Financial Advisor
                 </Link>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* SCHEDULE SITE VISIT MODAL */}
+        {showScheduleModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 relative">
+              <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                <div>
+                  <span className="text-[10px] font-black text-amber-800 uppercase tracking-widest bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+                    FREE CAB PICKUP & TOUR
+                  </span>
+                  <h3 className="text-xl font-black text-slate-950 pt-2">Schedule Site Visit</h3>
+                </div>
+                <button
+                  onClick={() => setShowScheduleModal(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-sm"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleScheduleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Select Venture / Property
+                  </label>
+                  <select
+                    value={scheduleForm.property}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, property: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-semibold bg-white"
+                  >
+                    <option value="Bhavya Royal Luxury Villa">Bhavya Royal Luxury Villa (Gachibowli)</option>
+                    <option value="Bhavya Green Acres Open Plot Layout">Bhavya Green Acres Open Plot Layout (Shadnagar)</option>
+                    <option value="Bhavya Aurora Sky Residences">Bhavya Aurora Sky Residences (Miyapur)</option>
+                    <option value="Bhavya Meenakshi County Township">Bhavya Meenakshi County Township (Tellapur)</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Preferred Visit Date
+                    </label>
+                    <input
+                      type="date"
+                      value={scheduleForm.date}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, date: e.target.value })}
+                      className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-semibold"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Time Slot
+                    </label>
+                    <select
+                      value={scheduleForm.time}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, time: e.target.value })}
+                      className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-semibold bg-white"
+                    >
+                      <option value="10:00 AM">10:00 AM (Morning)</option>
+                      <option value="11:30 AM">11:30 AM (Mid-day)</option>
+                      <option value="02:30 PM">02:30 PM (Afternoon)</option>
+                      <option value="04:30 PM">04:30 PM (Evening)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Pickup Location / Notes
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Enter landmark or cab pickup address..."
+                    value={scheduleForm.notes}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-xs outline-none focus:border-amber-500 font-medium"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowScheduleModal(false)}
+                    className="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={scheduling}
+                    className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-sm disabled:opacity-50"
+                  >
+                    {scheduling ? 'Scheduling...' : 'Confirm Site Visit Request'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

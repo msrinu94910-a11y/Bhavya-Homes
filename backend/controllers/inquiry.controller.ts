@@ -67,4 +67,13 @@ export class InquiryController {
       return sendError(res, error.message || 'Failed to update inquiry record', 400);
     }
   }
+
+  static async delete(req: Request, res: Response): Promise<Response> {
+    try {
+      await InquiryService.deleteInquiry(req.params.id);
+      return sendSuccess(res, 'Inquiry deleted successfully from database', null);
+    } catch (error: any) {
+      return sendError(res, error.message || 'Failed to delete inquiry record', 400);
+    }
+  }
 }

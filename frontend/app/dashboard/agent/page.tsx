@@ -407,29 +407,31 @@ export default function AgentDashboard() {
       <main className="flex-1 md:ml-64 p-4 sm:p-8 space-y-8 min-h-screen w-full max-w-full overflow-x-hidden no-scrollbar">
         
         {/* Top Light Hero Banner */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 p-6 sm:p-8 rounded-3xl text-slate-900 border border-amber-300/60 shadow-sm relative overflow-hidden">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-yellow-500/10 p-4 sm:p-8 rounded-3xl text-slate-900 border border-amber-300/60 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="flex items-center space-x-4 relative z-10">
+          <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 relative z-10">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2.5 rounded-2xl bg-white text-slate-700 hover:text-slate-950 border border-slate-200 shadow-sm"
+              className="md:hidden p-2.5 rounded-2xl bg-white text-slate-700 hover:text-slate-950 border border-slate-200 shadow-sm flex-shrink-0 mt-1 sm:mt-0"
             >
               ☰
             </button>
             <div className="space-y-1">
               <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                <span className="text-xs font-black text-amber-950 bg-amber-400/30 px-3 py-1 rounded-full uppercase tracking-wider border border-amber-400/40">
+                <span className="text-[10px] sm:text-xs font-black text-amber-950 bg-amber-400/30 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase tracking-wider border border-amber-400/40">
                   AGENT PORTAL
                 </span>
-                <span className="text-xs font-black text-amber-900 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+                <span className="text-[10px] sm:text-xs font-black text-amber-900 bg-amber-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-amber-300">
                   CODE: {agentCode}
                 </span>
-                <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-3 py-1 rounded-full border border-emerald-300">
+                <span className="text-[10px] sm:text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-emerald-300">
                   ONLINE & ACTIVE
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-950 pt-1">Welcome back, Agent {agentName}!</h1>
+              <h1 className="text-xl sm:text-3xl font-black text-slate-950 pt-1 leading-snug">
+                Welcome back, {agentName.startsWith('Agent') ? agentName : `Agent ${agentName}`}!
+              </h1>
               <p className="text-slate-600 text-xs font-semibold">{agentEmail || 'agent@bhavyahomes.com'}</p>
             </div>
           </div>
@@ -441,12 +443,6 @@ export default function AgentDashboard() {
             >
               <span>🔗</span>
               <span>Copy Referral Link</span>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold px-4 py-3 rounded-2xl border border-slate-300 transition-colors shadow-sm"
-            >
-              Logout
             </button>
           </div>
         </div>

@@ -1,8 +1,10 @@
 import { Response } from 'express';
 import { SiteVisitService } from '../services/siteVisit.service.js';
 import { User } from '../models/User.js';
+import { Property } from '../models/Property.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { AuthRequest } from '../middleware/auth.middleware.js';
+import mongoose from 'mongoose';
 
 export class SiteVisitController {
   static async getAll(req: AuthRequest, res: Response): Promise<Response> {
@@ -17,13 +19,26 @@ export class SiteVisitController {
   static async create(req: AuthRequest, res: Response): Promise<Response> {
     try {
       let customerId = req.user?._id?.toString();
+      const userEmail = req.body.email || req.body.customerEmail;
+      if (userEmail) {
+        const foundUser = await User.findOne({ email: userEmail });
+        if (foundUser) customerId = foundUser._id.toString();
+      }
       if (!customerId) {
         const user = await User.findOne({ role: 'CUSTOMER' });
         customerId = user?._id?.toString() || '650000000000000000000002';
       }
+
+      let propertyId = req.body.property;
+      if (!propertyId || !mongoose.Types.ObjectId.isValid(propertyId)) {
+        const prop = await Property.findOne({ title: new RegExp(req.body.propertyName || req.body.property || '', 'i') }) || await Property.findOne();
+        propertyId = prop?._id?.toString();
+      }
+
       const siteVisit = await SiteVisitService.createSiteVisit({
         ...req.body,
         customer: customerId,
+        property: propertyId,
       });
       return sendSuccess(res, 'Site visit requested successfully', siteVisit, 201);
     } catch (error: any) {

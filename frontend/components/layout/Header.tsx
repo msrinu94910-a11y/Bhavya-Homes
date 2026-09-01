@@ -66,58 +66,58 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 text-slate-900 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
-        {/* Brand Logo & Name */}
-        <Link href="/" className="flex items-center space-x-3 group">
-          <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-sm border border-amber-400 group-hover:scale-105 transition-transform bg-amber-50">
+        {/* Brand Logo & Name (Left Side) */}
+        <Link href="/" className="flex items-center space-x-2 sm:space-x-3 group flex-shrink-0">
+          <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-sm border border-amber-400 group-hover:scale-105 transition-transform bg-amber-50">
             <Image
               src="/logo.png"
               alt="Bhavya Homes Logo"
               fill
+              sizes="44px"
               className="object-cover"
               priority
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl sm:text-2xl font-black text-slate-950 tracking-wider">
+            <span className="text-base sm:text-2xl font-black text-slate-950 tracking-wider">
               BHAVYA HOMES
             </span>
-            <span className="text-[10px] text-amber-700 font-black tracking-widest uppercase -mt-1">
+            <span className="text-[8px] sm:text-[10px] text-amber-700 font-black tracking-widest uppercase -mt-0.5 sm:-mt-1">
               BUILDING A NEW FUTURE
             </span>
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center space-x-7 text-xs font-extrabold uppercase tracking-wider text-slate-700">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`transition-colors py-1 border-b-2 ${
-                  isActive
-                    ? 'text-amber-700 border-amber-500 font-black'
-                    : 'text-slate-700 border-transparent hover:text-amber-600 hover:border-amber-400'
-                }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Right Side: Desktop Navigation Links + Login Action Button */}
+        <div className="hidden lg:flex items-center space-x-6">
+          <nav className="flex items-center space-x-6 text-xs font-extrabold uppercase tracking-wider text-slate-700">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`transition-colors py-1 border-b-2 ${
+                    isActive
+                      ? 'text-amber-700 border-amber-500 font-black'
+                      : 'text-slate-700 border-transparent hover:text-amber-600 hover:border-amber-400'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Right Actions: Dynamic User Profile / Login & Book Visit */}
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          
+          {/* Right Action: Styled Login Button or Logged-in User Profile */}
           {user ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 border-l border-slate-200 pl-4 ml-2">
               <Link
                 href={dashboardHref}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-extrabold transition-all ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
                   pathname.startsWith('/dashboard')
-                    ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-sm'
-                    : 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200'
+                    ? 'bg-amber-400 text-slate-950 shadow-sm'
+                    : 'bg-slate-100 text-slate-900 border border-slate-200 hover:bg-amber-50 hover:border-amber-300'
                 }`}
               >
                 <span>👤</span>
@@ -125,7 +125,7 @@ export default function Header() {
               </Link>
               <button
                 onClick={handleLogout}
-                className="hidden sm:inline-block text-xs font-bold text-slate-500 hover:text-red-600 px-2 py-1 transition-colors"
+                className="text-xs font-bold text-slate-500 hover:text-red-600 px-2 py-1 transition-colors"
                 title="Logout"
               >
                 Logout
@@ -134,23 +134,34 @@ export default function Header() {
           ) : (
             <Link
               href="/auth/login"
-              className="hidden sm:inline-block text-xs font-extrabold text-slate-700 hover:text-slate-950 px-2 py-2 transition-colors"
+              className="text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-500 px-5 py-2.5 rounded-xl shadow-sm transition-all uppercase tracking-wider border border-amber-500 hover:shadow-md ml-2"
             >
               Login
             </Link>
           )}
+        </div>
 
-          <Link
-            href="/contact"
-            className="text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-500 px-4 py-2.5 rounded-xl shadow-sm transition-all uppercase tracking-wider transform hover:scale-105"
-          >
-            Book Site Visit
-          </Link>
-
-          {/* Mobile Menu Button */}
+        {/* Mobile Menu & Login Toggle */}
+        <div className="flex items-center lg:hidden space-x-3">
+          {user ? (
+            <Link
+              href={dashboardHref}
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-amber-400 text-slate-950 text-xs font-extrabold"
+            >
+              <span>👤</span>
+              <span>Dashboard</span>
+            </Link>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="text-xs font-black text-slate-950 bg-amber-400 px-3.5 py-1.5 rounded-lg uppercase tracking-wider"
+            >
+              Login
+            </Link>
+          )}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-lg text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {mobileMenuOpen ? (
@@ -161,6 +172,7 @@ export default function Header() {
             </svg>
           </button>
         </div>
+
       </div>
 
       {/* Mobile Navigation Drawer */}
@@ -183,6 +195,17 @@ export default function Header() {
               </Link>
             );
           })}
+          {!user && (
+            <div className="pt-3 border-t border-slate-100">
+              <Link
+                href="/auth/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-center text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-500 py-2.5 px-4 rounded-xl uppercase tracking-wider shadow-sm"
+              >
+                Login
+              </Link>
+            </div>
+          )}
           {user && (
             <div className="pt-2 border-t border-slate-100">
               <button
