@@ -87,30 +87,97 @@ export default function CustomerDashboard() {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
+    const applyLocalUpdates = (visits: SiteVisit[]) => {
+      if (typeof window === 'undefined') return visits;
+      try {
+        const stored = localStorage.getItem('bhavya_site_visits');
+        if (!stored) return visits;
+        const localVisits = JSON.parse(stored);
+        if (!Array.isArray(localVisits)) return visits;
+
+        const updated = visits.map((v) => {
+          const match = localVisits.find((lv: any) =>
+            (lv.id && (lv.id === v.id)) ||
+            (lv.property && v.property && lv.property.toLowerCase().trim() === v.property.toLowerCase().trim()) ||
+            (lv.email && email && lv.email.toLowerCase().trim() === email.toLowerCase().trim())
+          );
+          if (match) {
+            let agentInfo = v.agent;
+            if (match.adminNotes && match.adminNotes.includes('Assigned Agent:')) {
+              const agentPart = match.adminNotes.split('Assigned Agent:')[1];
+              if (agentPart) agentInfo = agentPart.trim();
+            } else if (match.agentName) {
+              agentInfo = `${match.agentName} (${match.agentPhone || '+91 98765 99999'})`;
+            }
+
+            return {
+              ...v,
+              status: (match.status || v.status).toUpperCase(),
+              agent: agentInfo,
+              date: match.requestedDate ? (isNaN(new Date(match.requestedDate).getTime()) ? match.requestedDate : `${new Date(match.requestedDate).getDate()}th ${new Date(match.requestedDate).toLocaleString('default', { month: 'long' })} ${new Date(match.requestedDate).getFullYear()}`) : v.date,
+              time: match.requestedTime || v.time,
+            };
+          }
+          return v;
+        });
+
+        localVisits.forEach((lv: any) => {
+          if (lv.email && lv.email.toLowerCase().trim() === email.toLowerCase().trim()) {
+            const exists = updated.some((u) => u.id === lv.id || u.property === lv.property);
+            if (!exists && lv.status !== 'CANCELLED') {
+              let agentInfo = 'Advisory Team (+91 94910 00000)';
+              if (lv.adminNotes && lv.adminNotes.includes('Assigned Agent:')) {
+                const agentPart = lv.adminNotes.split('Assigned Agent:')[1];
+                if (agentPart) agentInfo = agentPart.trim();
+              } else if (lv.agentName) {
+                agentInfo = `${lv.agentName} (${lv.agentPhone || '+91 98765 99999'})`;
+              }
+              updated.unshift({
+                id: lv.id,
+                property: lv.property,
+                location: 'Hyderabad Corridor',
+                date: lv.requestedDate ? (isNaN(new Date(lv.requestedDate).getTime()) ? lv.requestedDate : `${new Date(lv.requestedDate).getDate()}th ${new Date(lv.requestedDate).toLocaleString('default', { month: 'long' })} ${new Date(lv.requestedDate).getFullYear()}`) : 'Upcoming Date',
+                time: lv.requestedTime || '11:00 AM',
+                status: (lv.status || 'CONFIRMED').toUpperCase(),
+                agent: agentInfo,
+                image: '/villa1.jpg',
+              });
+            }
+          }
+        });
+
+        return updated;
+      } catch (e) {
+        return visits;
+      }
+    };
+
     // 1. Fetch Real-Time Site Visits from Backend MongoDB API
     fetch(`http://localhost:5000/api/site-visits?email=${encodeURIComponent(email)}`, { headers })
       .then((res) => res.json())
       .then((data) => {
         const rawVisits = data.data || data.siteVisits || data;
-        if (Array.isArray(rawVisits)) {
+        if (Array.isArray(rawVisits) && rawVisits.length > 0) {
           const parsedVisits: SiteVisit[] = rawVisits
             .filter((v: any) => v.status !== 'CANCELLED')
             .map((v: any) => {
               const propObj = typeof v.property === 'object' ? v.property : null;
-              const propName = propObj?.title || propObj?.name || 'Bhavya Venture Property';
+              const propName = propObj?.title || propObj?.name || v.propertyName || v.property || 'Bhavya Venture Property';
               const location = propObj?.location ? (propObj.location.includes('Hyderabad') ? propObj.location : `${propObj.location}, Hyderabad`) : 'Hyderabad Corridor';
               const image = (propObj?.images && propObj.images[0]) || propObj?.image || '/villa1.jpg';
 
               let formattedDate = 'Upcoming Date';
               if (v.requestedDate) {
                 const d = new Date(v.requestedDate);
-                formattedDate = `${d.getDate()}th ${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
+                formattedDate = isNaN(d.getTime()) ? v.requestedDate : `${d.getDate()}th ${d.toLocaleString('default', { month: 'long' })} ${d.getFullYear()}`;
               }
 
               let agentInfo = 'Advisory Team (+91 94910 00000)';
               if (v.adminNotes && v.adminNotes.includes('Assigned Agent:')) {
                 const agentPart = v.adminNotes.split('Assigned Agent:')[1];
                 if (agentPart) agentInfo = agentPart.trim();
+              } else if (v.assignedAgentName || v.agentName) {
+                agentInfo = `${v.assignedAgentName || v.agentName} (${v.assignedAgentPhone || v.agentPhone || '+91 98765 99999'})`;
               }
 
               return {
@@ -124,10 +191,14 @@ export default function CustomerDashboard() {
                 image: image,
               };
             });
-          setVisitsList(parsedVisits);
+          setVisitsList(applyLocalUpdates(parsedVisits));
+        } else {
+          setVisitsList(applyLocalUpdates([]));
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setVisitsList(applyLocalUpdates([]));
+      });
 
     // 2. Fetch Real-Time Saved / Shortlisted Properties from Backend MongoDB API
     fetch(`http://localhost:5000/api/customer/saved-properties?email=${encodeURIComponent(email)}`, { headers })
@@ -240,6 +311,17 @@ export default function CustomerDashboard() {
           setUserName(derived);
         }
         fetchCustomerData(email);
+
+        const handleUpdateEvent = () => fetchCustomerData(email);
+        window.addEventListener('storage', handleUpdateEvent);
+        window.addEventListener('site_visits_updated', handleUpdateEvent);
+        window.addEventListener('focus', handleUpdateEvent);
+
+        return () => {
+          window.removeEventListener('storage', handleUpdateEvent);
+          window.removeEventListener('site_visits_updated', handleUpdateEvent);
+          window.removeEventListener('focus', handleUpdateEvent);
+        };
       }
     }
   }, [router]);
@@ -536,7 +618,13 @@ export default function CustomerDashboard() {
                         sizes="160px"
                         className="object-cover"
                       />
-                      <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                      <span className={`absolute top-2 left-2 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm ${
+                        visit.status === 'CONFIRMED' ? 'bg-emerald-600' :
+                        visit.status === 'COMPLETED' ? 'bg-blue-600' :
+                        visit.status === 'CANCELLED' ? 'bg-red-600' :
+                        visit.status === 'RESCHEDULED' ? 'bg-purple-600' :
+                        'bg-amber-500'
+                      }`}>
                         {visit.status}
                       </span>
                     </div>

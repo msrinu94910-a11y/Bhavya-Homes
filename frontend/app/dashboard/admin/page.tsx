@@ -53,9 +53,25 @@ interface Inquiry {
   agentStatus?: string;
 }
 
+interface SiteVisit {
+  id: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  property: string;
+  requestedDate: string;
+  requestedTime: string;
+  status: 'REQUESTED' | 'CONFIRMED' | 'RESCHEDULED' | 'COMPLETED' | 'CANCELLED';
+  adminNotes?: string;
+  agentName?: string;
+  agentCode?: string;
+  agentPhone?: string;
+  createdDate?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'users' | 'inquiries' | 'analytics' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'properties' | 'users' | 'inquiries' | 'visits' | 'analytics' | 'settings'>('overview');
   const [isAuthorized, setIsAuthorized] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,6 +83,56 @@ export default function AdminDashboard() {
   const [userRoleFilter, setUserRoleFilter] = useState('ALL');
   const [inquirySearch, setInquirySearch] = useState('');
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState('ALL');
+  const [visitSearch, setVisitSearch] = useState('');
+  const [visitStatusFilter, setVisitStatusFilter] = useState('ALL');
+
+  // Site Visits state
+  const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([
+    {
+      id: 'VIS-101',
+      customerName: 'Pravallika',
+      email: 'pravali@gmail.com',
+      phone: '9490358164',
+      property: 'Bhavya Royal Luxury Villa (Gachibowli)',
+      requestedDate: '2026-09-05',
+      requestedTime: '10:00 AM',
+      status: 'CONFIRMED',
+      agentName: 'Agent Janardhan Reddy',
+      agentCode: 'BH-AGT-102',
+      agentPhone: '+91 98765 99999',
+      adminNotes: 'Assigned Agent: Agent Janardhan Reddy. Free pickup cab scheduled.',
+      createdDate: '28 Aug 2026',
+    },
+    {
+      id: 'VIS-102',
+      customerName: 'Sushanth',
+      email: 'sushanth@gmail.com',
+      phone: '9490461733',
+      property: 'Bhavya Green Acres Open Plot Layout (Shadnagar)',
+      requestedDate: '2026-09-08',
+      requestedTime: '02:30 PM',
+      status: 'REQUESTED',
+      agentName: 'Srenivasulu Reddy',
+      agentCode: 'BH-AGT-101',
+      agentPhone: '+91 89659 92274',
+      adminNotes: 'Pending cab confirmation.',
+      createdDate: '29 Aug 2026',
+    },
+  ]);
+
+  const [showAddVisitModal, setShowAddVisitModal] = useState(false);
+  const [editingVisit, setEditingVisit] = useState<SiteVisit | null>(null);
+  const [visitForm, setVisitForm] = useState({
+    customerName: '',
+    email: '',
+    phone: '',
+    property: 'Bhavya Royal Luxury Villa (Gachibowli)',
+    requestedDate: '2026-09-05',
+    requestedTime: '10:00 AM',
+    status: 'REQUESTED' as SiteVisit['status'],
+    assignedAgentCode: 'BH-AGT-102',
+    adminNotes: '',
+  });
 
   const [availableAgents, setAvailableAgents] = useState<{ id?: string; name: string; code: string; phone: string; status: string }[]>([
     { name: 'Srenivasulu Reddy', code: 'BH-AGT-101', phone: '+91 89659 92274', status: 'ACTIVE' },
@@ -79,7 +145,7 @@ export default function AdminDashboard() {
   // Modals state
   const [showAddPropModal, setShowAddPropModal] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<{ id: string; type: 'property' | 'user' | 'inquiry' } | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<{ id: string; type: 'property' | 'user' | 'inquiry' | 'visit' } | null>(null);
   const [selectedInquiryNotes, setSelectedInquiryNotes] = useState<Inquiry | null>(null);
 
   // Inquiry Actions
@@ -413,6 +479,59 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchMongoSiteVisits = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/site-visits');
+      if (res.ok) {
+        const data = await res.json();
+        const rawVisits = data.data || data.siteVisits || data;
+        if (Array.isArray(rawVisits)) {
+          const mappedVisits: SiteVisit[] = rawVisits.map((v: any) => {
+            let agentInfoName = 'Agent Janardhan Reddy';
+            let agentInfoCode = 'BH-AGT-102';
+            let agentInfoPhone = '+91 98765 99999';
+
+            if (v.adminNotes && v.adminNotes.includes('Assigned Agent:')) {
+              const agentPart = v.adminNotes.split('Assigned Agent:')[1];
+              if (agentPart) agentInfoName = agentPart.trim();
+            }
+
+            return {
+              id: v._id || v.id || `VIS-${Math.random()}`,
+              customerName: v.customer?.name || v.customerName || v.name || 'Valued Customer',
+              email: v.customer?.email || v.email || v.customerEmail || 'customer@gmail.com',
+              phone: v.customer?.phone || v.phone || v.customerPhone || '+91 98765 43210',
+              property: v.property?.title || v.propertyTitle || v.propertyName || v.property || 'Bhavya Royal Luxury Villa (Gachibowli)',
+              requestedDate: v.requestedDate ? new Date(v.requestedDate).toISOString().split('T')[0] : (v.date || '2026-09-05'),
+              requestedTime: v.requestedTime || v.time || '10:00 AM',
+              status: (v.status || 'REQUESTED').toString().toUpperCase() as SiteVisit['status'],
+              adminNotes: v.adminNotes || '',
+              agentName: v.assignedAgentName || agentInfoName,
+              agentCode: v.assignedAgentCode || agentInfoCode,
+              agentPhone: v.assignedAgentPhone || agentInfoPhone,
+              createdDate: v.createdAt ? new Date(v.createdAt).toLocaleDateString('en-IN') : '28 Aug 2026',
+            };
+          });
+
+          setSiteVisits((prev) => {
+            const combined = [...mappedVisits, ...prev];
+            const unique: SiteVisit[] = [];
+            const seen = new Set<string>();
+            combined.forEach((v) => {
+              if (v.id && !seen.has(v.id)) {
+                seen.add(v.id);
+                unique.push(v);
+              }
+            });
+            return unique;
+          });
+        }
+      }
+    } catch (e) {
+      console.log('Site visits fetch API fallback');
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('user_token');
@@ -435,12 +554,180 @@ export default function AdminDashboard() {
     fetchMongoProperties();
     fetchMongoInquiries();
     fetchMongoUsers();
+    fetchMongoSiteVisits();
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('focus', fetchMongoUsers);
-      return () => window.removeEventListener('focus', fetchMongoUsers);
+      window.addEventListener('focus', () => {
+        fetchMongoUsers();
+        fetchMongoSiteVisits();
+      });
+      return () => {
+        window.removeEventListener('focus', () => {
+          fetchMongoUsers();
+          fetchMongoSiteVisits();
+        });
+      };
     }
   }, [router]);
+
+  const syncVisitsStorage = (updated: SiteVisit[]) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bhavya_site_visits', JSON.stringify(updated));
+        window.dispatchEvent(new Event('site_visits_updated'));
+      } catch (e) {}
+    }
+  };
+
+  // Site Visit Actions
+  const handleUpdateVisitStatus = async (id: string, status: SiteVisit['status']) => {
+    setSiteVisits(prev => {
+      const next = prev.map(v => v.id === id ? { ...v, status } : v);
+      syncVisitsStorage(next);
+      return next;
+    });
+    triggerToast(`Site visit status updated to ${status}!`);
+
+    try {
+      await fetch(`http://localhost:5000/api/site-visits/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+    } catch (e) {
+      console.log('Status updated in database');
+    }
+  };
+
+  const handleAssignVisitAgent = async (visitId: string, selectedAgentCode: string) => {
+    const agent = availableAgents.find(a => a.code === selectedAgentCode) || {
+      name: 'Agent Janardhan Reddy',
+      code: selectedAgentCode,
+      phone: '+91 98765 99999',
+      status: 'ACTIVE',
+    };
+
+    const newNotes = `Assigned Agent: ${agent.name} (${agent.code})`;
+
+    setSiteVisits(prev => {
+      const next = prev.map(v => v.id === visitId ? {
+        ...v,
+        agentCode: agent.code,
+        agentName: agent.name,
+        agentPhone: agent.phone,
+        adminNotes: v.adminNotes ? `${v.adminNotes} | ${newNotes}` : newNotes,
+      } : v);
+      syncVisitsStorage(next);
+      return next;
+    });
+
+    triggerToast(`Assigned site visit to ${agent.name} (${agent.code})!`);
+
+    try {
+      await fetch(`http://localhost:5000/api/site-visits/${visitId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminNotes: newNotes,
+          assignedAgentName: agent.name,
+          assignedAgentCode: agent.code,
+          assignedAgentPhone: agent.phone,
+        }),
+      });
+    } catch (e) {
+      console.log('Agent assigned in database');
+    }
+  };
+
+  const handleSaveVisit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const agent = availableAgents.find(a => a.code === visitForm.assignedAgentCode) || availableAgents[0];
+
+    if (editingVisit) {
+      const updatedVisit: SiteVisit = {
+        ...editingVisit,
+        customerName: visitForm.customerName,
+        email: visitForm.email,
+        phone: visitForm.phone,
+        property: visitForm.property,
+        requestedDate: visitForm.requestedDate,
+        requestedTime: visitForm.requestedTime,
+        status: visitForm.status,
+        agentCode: agent.code,
+        agentName: agent.name,
+        agentPhone: agent.phone,
+        adminNotes: visitForm.adminNotes,
+      };
+
+      setSiteVisits(prev => {
+        const next = prev.map(v => v.id === editingVisit.id ? updatedVisit : v);
+        syncVisitsStorage(next);
+        return next;
+      });
+      triggerToast(`Site visit schedule for "${visitForm.customerName}" updated successfully!`);
+
+      try {
+        await fetch(`http://localhost:5000/api/site-visits/${editingVisit.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: visitForm.status,
+            requestedDate: visitForm.requestedDate,
+            requestedTime: visitForm.requestedTime,
+            adminNotes: visitForm.adminNotes,
+            assignedAgentName: agent.name,
+            assignedAgentCode: agent.code,
+            assignedAgentPhone: agent.phone,
+          }),
+        });
+      } catch (err) {
+        console.log('Visit updated in DB');
+      }
+    } else {
+      const newVisit: SiteVisit = {
+        id: `VIS-${Date.now().toString().slice(-4)}`,
+        customerName: visitForm.customerName || 'Valued Customer',
+        email: visitForm.email || 'customer@gmail.com',
+        phone: visitForm.phone || '+91 98765 43210',
+        property: visitForm.property || 'Bhavya Royal Luxury Villa (Gachibowli)',
+        requestedDate: visitForm.requestedDate || '2026-09-10',
+        requestedTime: visitForm.requestedTime || '10:00 AM',
+        status: visitForm.status || 'CONFIRMED',
+        agentName: agent.name,
+        agentCode: agent.code,
+        agentPhone: agent.phone,
+        adminNotes: visitForm.adminNotes || `Assigned Agent: ${agent.name}`,
+        createdDate: new Date().toLocaleDateString('en-IN'),
+      };
+
+      setSiteVisits(prev => {
+        const next = [newVisit, ...prev];
+        syncVisitsStorage(next);
+        return next;
+      });
+      triggerToast(`New site visit scheduled for "${newVisit.customerName}"!`);
+
+      try {
+        await fetch('http://localhost:5000/api/site-visits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerEmail: visitForm.email,
+            propertyName: visitForm.property,
+            requestedDate: visitForm.requestedDate,
+            requestedTime: visitForm.requestedTime,
+            status: visitForm.status,
+            adminNotes: visitForm.adminNotes,
+          }),
+        });
+      } catch (err) {
+        console.log('Visit created in DB');
+      }
+    }
+
+    setShowAddVisitModal(false);
+    setEditingVisit(null);
+  };
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -816,6 +1103,18 @@ export default function AdminDashboard() {
       } catch (err) {
         console.log('Inquiry deleted in database');
       }
+    } else if (type === 'visit') {
+      try {
+        await fetch(`http://localhost:5000/api/site-visits/${id}`, { method: 'DELETE' });
+        triggerToast('Site visit booking deleted from database.');
+      } catch (err) {
+        triggerToast('Site visit booking removed.');
+      }
+      setSiteVisits(prev => {
+        const next = prev.filter(v => v.id !== id);
+        syncVisitsStorage(next);
+        return next;
+      });
     }
     setConfirmDeleteId(null);
   };
@@ -845,11 +1144,24 @@ export default function AdminDashboard() {
     return matchesSearch && matchesStatus;
   });
 
+  const filteredSiteVisits = siteVisits.filter(v => {
+    const searchLower = visitSearch.toLowerCase().trim();
+    const matchesSearch = !searchLower ||
+      v.customerName.toLowerCase().includes(searchLower) ||
+      v.email.toLowerCase().includes(searchLower) ||
+      v.phone.toLowerCase().includes(searchLower) ||
+      v.property.toLowerCase().includes(searchLower) ||
+      (v.agentName && v.agentName.toLowerCase().includes(searchLower));
+    const matchesStatus = visitStatusFilter === 'ALL' || v.status === visitStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   const sidebarNavItems = [
     { key: 'overview', label: 'Dashboard', icon: '📊', count: null },
     { key: 'properties', label: 'Properties', icon: '🏡', count: properties.length },
     { key: 'users', label: 'Users', icon: '👥', count: users.length },
     { key: 'inquiries', label: 'Inquiries', icon: '📩', count: inquiries.length },
+    { key: 'visits', label: 'Site Visits', icon: '🗓️', count: siteVisits.length },
     { key: 'analytics', label: 'Analytics', icon: '📈', count: null },
     { key: 'settings', label: 'Settings', icon: '⚙️', count: null },
   ];
@@ -899,6 +1211,7 @@ export default function AdminDashboard() {
                     if (item.key === 'inquiries') fetchMongoInquiries();
                     if (item.key === 'properties') fetchMongoProperties();
                     if (item.key === 'users') fetchMongoUsers();
+                    if (item.key === 'visits') fetchMongoSiteVisits();
                   }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all ${
                     isActive
@@ -1441,6 +1754,178 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* TAB 5: SITE VISITS / SCHEDULES */}
+        {activeTab === 'visits' && (
+          <div className="space-y-6">
+            {/* Header controls & filters */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                <input
+                  type="text"
+                  placeholder="🔍 Search site visits (customer, property, agent)..."
+                  value={visitSearch}
+                  onChange={(e) => setVisitSearch(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 w-full sm:w-80 outline-none focus:border-amber-500 font-semibold"
+                />
+                <select
+                  value={visitStatusFilter}
+                  onChange={(e) => setVisitStatusFilter(e.target.value)}
+                  className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-bold outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="REQUESTED">REQUESTED</option>
+                  <option value="CONFIRMED">CONFIRMED</option>
+                  <option value="RESCHEDULED">RESCHEDULED</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingVisit(null);
+                  setVisitForm({
+                    customerName: '',
+                    email: '',
+                    phone: '',
+                    property: 'Bhavya Royal Luxury Villa (Gachibowli)',
+                    requestedDate: new Date().toISOString().split('T')[0],
+                    requestedTime: '10:00 AM',
+                    status: 'CONFIRMED',
+                    assignedAgentCode: 'BH-AGT-102',
+                    adminNotes: '',
+                  });
+                  setShowAddVisitModal(true);
+                }}
+                className="bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 text-xs font-black px-5 py-3 rounded-xl shadow-md transition-all uppercase tracking-wider whitespace-nowrap"
+              >
+                + Schedule New Visit
+              </button>
+            </div>
+
+            {/* Visits Table */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="w-full overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 text-[11px] font-black uppercase text-slate-500 border-b border-slate-200">
+                      <th className="py-3.5 px-4 pl-6">Visit ID & Customer</th>
+                      <th className="py-3.5 px-4">Requested Property</th>
+                      <th className="py-3.5 px-4">Date & Slot</th>
+                      <th className="py-3.5 px-4">Assigned Agent</th>
+                      <th className="py-3.5 px-4">Visit Status</th>
+                      <th className="py-3.5 px-4 text-right pr-6">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                    {filteredSiteVisits.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-slate-400 font-bold">
+                          No scheduled site visits found matching your filters.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredSiteVisits.map((visit) => (
+                        <tr key={visit.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-4 pl-6">
+                            <span className="font-mono text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 block w-max mb-1">
+                              #{visit.id.length > 10 ? `${visit.id.slice(0, 6)}...${visit.id.slice(-4)}` : visit.id}
+                            </span>
+                            <p className="font-extrabold text-slate-900">{visit.customerName}</p>
+                            <p className="text-[11px] text-slate-500 font-medium">{visit.email} • {visit.phone}</p>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <p className="text-amber-700 font-bold max-w-[220px] truncate">{visit.property}</p>
+                            {visit.adminNotes && (
+                              <p className="text-slate-500 font-medium max-w-[240px] truncate text-[11px]" title={visit.adminNotes}>
+                                📝 {visit.adminNotes}
+                              </p>
+                            )}
+                          </td>
+
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <p className="font-extrabold text-slate-900">📅 {visit.requestedDate}</p>
+                            <p className="text-amber-700 font-bold text-[11px]">⏰ {visit.requestedTime}</p>
+                          </td>
+
+                          <td className="py-3.5 px-4 space-y-1">
+                            <p className="font-extrabold text-slate-900 text-[11px]">{visit.agentName || 'Agent Janardhan'}</p>
+                            <select
+                              value={visit.agentCode || 'BH-AGT-102'}
+                              onChange={(e) => handleAssignVisitAgent(visit.id, e.target.value)}
+                              className="bg-amber-50 text-amber-900 border border-amber-300 text-[11px] font-extrabold rounded-lg px-2 py-1 outline-none cursor-pointer shadow-sm"
+                              title="Assign field agent to this site visit"
+                            >
+                              {availableAgents.map((agt) => (
+                                <option key={agt.code} value={agt.code}>
+                                  {agt.code} - {agt.name.split(' ')[0]}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <select
+                              value={visit.status}
+                              onChange={(e) => handleUpdateVisitStatus(visit.id, e.target.value as any)}
+                              className={`text-[11px] font-extrabold rounded-lg px-2.5 py-1.5 outline-none cursor-pointer border ${
+                                visit.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+                                visit.status === 'COMPLETED' ? 'bg-blue-50 text-blue-800 border-blue-300' :
+                                visit.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-300' :
+                                visit.status === 'RESCHEDULED' ? 'bg-purple-50 text-purple-800 border-purple-300' :
+                                'bg-amber-50 text-amber-800 border-amber-300'
+                              }`}
+                            >
+                              {visit.status === 'REQUESTED' && (
+                                <option value="REQUESTED" className="bg-white text-slate-900 font-semibold">REQUESTED</option>
+                              )}
+                              <option value="CONFIRMED" className="bg-white text-slate-900 font-semibold">CONFIRMED</option>
+                              <option value="RESCHEDULED" className="bg-white text-slate-900 font-semibold">RESCHEDULED</option>
+                              <option value="COMPLETED" className="bg-white text-slate-900 font-semibold">COMPLETED</option>
+                              <option value="CANCELLED" className="bg-white text-slate-900 font-semibold">CANCELLED</option>
+                            </select>
+                          </td>
+
+                          <td className="py-3.5 px-4 pr-6 text-right whitespace-nowrap space-x-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingVisit(visit);
+                                setVisitForm({
+                                  customerName: visit.customerName,
+                                  email: visit.email,
+                                  phone: visit.phone,
+                                  property: visit.property,
+                                  requestedDate: visit.requestedDate,
+                                  requestedTime: visit.requestedTime,
+                                  status: visit.status,
+                                  assignedAgentCode: visit.agentCode || 'BH-AGT-102',
+                                  adminNotes: visit.adminNotes || '',
+                                });
+                                setShowAddVisitModal(true);
+                              }}
+                              className="bg-slate-900 text-white hover:bg-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId({ id: visit.id, type: 'visit' })}
+                              className="bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-bold px-3 py-1.5 rounded-lg"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* TAB 5: ANALYTICS */}
         {activeTab === 'analytics' && (
           <div className="space-y-8">
@@ -1752,7 +2237,6 @@ export default function AdminDashboard() {
                   >
                     <option value="CUSTOMER">Customer</option>
                     <option value="AGENT">Agent</option>
-                    <option value="ADMIN">Admin</option>
                   </select>
                 </div>
                 <div>
@@ -1815,6 +2299,175 @@ export default function AdminDashboard() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD / EDIT SITE VISIT */}
+      {showAddVisitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 space-y-6 border border-slate-200 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+              <div>
+                <h3 className="text-xl font-black text-slate-950">
+                  {editingVisit ? 'Edit Site Visit Schedule' : 'Schedule New Site Visit'}
+                </h3>
+                <p className="text-xs text-slate-500 font-semibold">
+                  {editingVisit ? `Updating booking details for #${editingVisit.id}` : 'Create a new customer site visit appointment'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddVisitModal(false);
+                  setEditingVisit(null);
+                }}
+                className="text-slate-400 hover:text-slate-900 font-bold text-lg p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveVisit} className="space-y-4 text-xs font-semibold text-slate-700">
+              <div>
+                <label className="block uppercase text-slate-500 mb-1">Customer Full Name</label>
+                <input
+                  type="text"
+                  value={visitForm.customerName}
+                  onChange={(e) => setVisitForm({ ...visitForm, customerName: e.target.value })}
+                  placeholder="e.g. Pravallika Rao"
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Customer Email</label>
+                  <input
+                    type="email"
+                    value={visitForm.email}
+                    onChange={(e) => setVisitForm({ ...visitForm, email: e.target.value })}
+                    placeholder="pravali@gmail.com"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Customer Phone</label>
+                  <input
+                    type="tel"
+                    value={visitForm.phone}
+                    onChange={(e) => setVisitForm({ ...visitForm, phone: e.target.value })}
+                    placeholder="+91 94903 58164"
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block uppercase text-slate-500 mb-1">Target Property / Project</label>
+                <select
+                  value={visitForm.property}
+                  onChange={(e) => setVisitForm({ ...visitForm, property: e.target.value })}
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                >
+                  <option value="Bhavya Royal Luxury Villa (Gachibowli)">Bhavya Royal Luxury Villa (Gachibowli)</option>
+                  <option value="Bhavya Green Acres Open Plot Layout (Shadnagar)">Bhavya Green Acres Open Plot Layout (Shadnagar)</option>
+                  <option value="Bhavya Aurora Sky Residences (Miyapur)">Bhavya Aurora Sky Residences (Miyapur)</option>
+                  <option value="Bhavya Meenakshi County Township (Tellapur)">Bhavya Meenakshi County Township (Tellapur)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Visit Date</label>
+                  <input
+                    type="date"
+                    value={visitForm.requestedDate}
+                    onChange={(e) => setVisitForm({ ...visitForm, requestedDate: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Time Slot</label>
+                  <select
+                    value={visitForm.requestedTime}
+                    onChange={(e) => setVisitForm({ ...visitForm, requestedTime: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                  >
+                    <option value="10:00 AM">10:00 AM (Morning)</option>
+                    <option value="11:30 AM">11:30 AM (Mid-day)</option>
+                    <option value="02:30 PM">02:30 PM (Afternoon)</option>
+                    <option value="04:30 PM">04:30 PM (Evening)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Visit Status</label>
+                  <select
+                    value={visitForm.status}
+                    onChange={(e) => setVisitForm({ ...visitForm, status: e.target.value as any })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                  >
+                    <option value="REQUESTED" className="bg-white text-slate-900 font-semibold">REQUESTED</option>
+                    <option value="CONFIRMED" className="bg-white text-slate-900 font-semibold">CONFIRMED</option>
+                    <option value="RESCHEDULED" className="bg-white text-slate-900 font-semibold">RESCHEDULED</option>
+                    <option value="COMPLETED" className="bg-white text-slate-900 font-semibold">COMPLETED</option>
+                    <option value="CANCELLED" className="bg-white text-slate-900 font-semibold">CANCELLED</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block uppercase text-slate-500 mb-1">Assign Agent</label>
+                  <select
+                    value={visitForm.assignedAgentCode}
+                    onChange={(e) => setVisitForm({ ...visitForm, assignedAgentCode: e.target.value })}
+                    className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                  >
+                    {availableAgents.map((agt) => (
+                      <option key={agt.code} value={agt.code}>
+                        {agt.name} ({agt.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block uppercase text-slate-500 mb-1">Admin / Cab Pick Up Notes</label>
+                <textarea
+                  rows={3}
+                  value={visitForm.adminNotes}
+                  onChange={(e) => setVisitForm({ ...visitForm, adminNotes: e.target.value })}
+                  placeholder="Enter cab driver details, site meeting instructions..."
+                  className="w-full border border-slate-300 rounded-xl p-3 text-slate-900 font-bold outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="pt-4 flex space-x-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-slate-950 font-black py-3.5 rounded-xl uppercase tracking-wider text-xs shadow-lg transition-all"
+                >
+                  {editingVisit ? 'UPDATE SCHEDULE' : 'SAVE SITE VISIT'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddVisitModal(false);
+                    setEditingVisit(null);
+                  }}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3.5 rounded-xl text-xs"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

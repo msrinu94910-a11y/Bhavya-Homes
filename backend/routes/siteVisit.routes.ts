@@ -7,5 +7,6 @@ const router = Router();
 router.get('/', SiteVisitController.getAll);
 router.post('/', SiteVisitController.create);
 router.put('/:id', SiteVisitController.updateStatus);
+router.delete('/:id', SiteVisitController.delete);
 
 export default router;

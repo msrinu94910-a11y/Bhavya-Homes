@@ -20,25 +20,29 @@ export class SiteVisitController {
     try {
       let customerId = req.user?._id?.toString();
       const userEmail = req.body.email || req.body.customerEmail;
+      const userName = req.body.customerName || req.body.name;
+      const userPhone = req.body.customerPhone || req.body.phone;
+      const propTitle = req.body.propertyName || req.body.property;
+
       if (userEmail) {
         const foundUser = await User.findOne({ email: userEmail });
         if (foundUser) customerId = foundUser._id.toString();
       }
-      if (!customerId) {
-        const user = await User.findOne({ role: 'CUSTOMER' });
-        customerId = user?._id?.toString() || '650000000000000000000002';
-      }
 
       let propertyId = req.body.property;
       if (!propertyId || !mongoose.Types.ObjectId.isValid(propertyId)) {
-        const prop = await Property.findOne({ title: new RegExp(req.body.propertyName || req.body.property || '', 'i') }) || await Property.findOne();
+        const prop = await Property.findOne({ title: new RegExp(propTitle || '', 'i') }) || await Property.findOne();
         propertyId = prop?._id?.toString();
       }
 
       const siteVisit = await SiteVisitService.createSiteVisit({
         ...req.body,
-        customer: customerId,
-        property: propertyId,
+        customer: customerId && mongoose.Types.ObjectId.isValid(customerId) ? customerId as any : undefined,
+        property: propertyId && mongoose.Types.ObjectId.isValid(propertyId) ? propertyId as any : undefined,
+        customerEmail: userEmail,
+        customerName: userName,
+        customerPhone: userPhone,
+        propertyName: propTitle,
       });
       return sendSuccess(res, 'Site visit requested successfully', siteVisit, 201);
     } catch (error: any) {
@@ -52,6 +56,15 @@ export class SiteVisitController {
       return sendSuccess(res, 'Site visit updated successfully', siteVisit);
     } catch (error: any) {
       return sendError(res, error.message || 'Failed to update site visit', 400);
+    }
+  }
+
+  static async delete(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const siteVisit = await SiteVisitService.deleteSiteVisit(req.params.id);
+      return sendSuccess(res, 'Site visit deleted successfully', siteVisit);
+    } catch (error: any) {
+      return sendError(res, error.message || 'Failed to delete site visit', 400);
     }
   }
 }
